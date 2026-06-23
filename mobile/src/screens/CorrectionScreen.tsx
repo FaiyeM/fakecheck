@@ -109,7 +109,7 @@ export function CorrectionScreen() {
           Original result: {verdict?.verdict ?? "—"} ({Math.round(verdict?.overallConfidence ?? 0)}%)
         </Text>
 
-        <Text style={styles.label}>What's the correct verdict?</Text>
+        <Text style={styles.label}>What&apos;s the correct verdict?</Text>
         <View style={styles.choices}>
           {CHOICES.map((c) => (
             <Pressable

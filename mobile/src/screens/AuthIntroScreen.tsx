@@ -13,7 +13,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { useCategorySteps } from "../api/hooks";
 import { useScanStore } from "../store/scanStore";
 import { categoryLabel } from "../constants/categories";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 import type { StepDto } from "../api/types";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -45,7 +45,7 @@ export function AuthIntroScreen() {
         </View>
       ) : isError ? (
         <View style={styles.centered}>
-          <Text style={styles.error}>Couldn't load the photo steps.</Text>
+          <Text style={styles.error}>Couldn&apos;t load the photo steps.</Text>
           <PrimaryButton title="Retry" onPress={() => refetch()} />
         </View>
       ) : (
@@ -53,7 +53,7 @@ export function AuthIntroScreen() {
           <Text style={styles.lead}>
             {count} more photo{count === 1 ? "" : "s"}, about 60–90 seconds.
           </Text>
-          <Text style={styles.subhead}>We'll guide you through each one:</Text>
+          <Text style={styles.subhead}>We&apos;ll guide you through each one:</Text>
 
           <FlatList
             data={steps}
