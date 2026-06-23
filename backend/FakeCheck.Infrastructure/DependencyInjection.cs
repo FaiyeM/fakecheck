@@ -16,8 +16,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddFakeCheckInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        // EF Core / Postgres
+        // EF Core / Postgres.
+        // Priority: explicit ConnectionStrings__Default, else Railway's injected
+        // DATABASE_URL (postgres:// URI, auto-converted), else a local dev default.
         var conn = config.GetConnectionString("Default")
+                   ?? ConvertDatabaseUrl(Environment.GetEnvironmentVariable("DATABASE_URL"))
                    ?? "Host=localhost;Port=5432;Database=fakecheck;Username=postgres;Password=dev";
         services.AddDbContext<FakeCheckDbContext>(o => o.UseNpgsql(conn));
 
@@ -49,5 +52,32 @@ public static class DependencyInjection
         services.AddScoped<IScanRepository, ScanRepository>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Converts a Railway/Heroku-style <c>postgres://user:pass@host:port/db</c> URL into an
+    /// Npgsql keyword connection string. Returns null when the input is empty/unparseable.
+    /// </summary>
+    internal static string? ConvertDatabaseUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        if (!url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
+            !url.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            // Already a keyword connection string (Host=...;...) — pass through.
+            return url;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var user = Uri.UnescapeDataString(userInfo[0]);
+        var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var db = uri.AbsolutePath.TrimStart('/');
+        var port = uri.Port > 0 ? uri.Port : 5432;
+
+        // SSL Mode=Prefer keeps Railway's private-network (non-TLS) connections working
+        // while still using TLS when the public proxy host requires it.
+        return $"Host={uri.Host};Port={port};Database={db};Username={user};Password={pass};" +
+               "SSL Mode=Prefer;Trust Server Certificate=true";
     }
 }
