@@ -1,5 +1,4 @@
-// Route params for the scan flow (spec §3/§4). Screens are stubbed in Phase 9
-// and implemented in Phase 10.
+// Route params for the scan flow (spec §3/§4).
 
 export type RootStackParamList = {
   Home: undefined;
@@ -7,7 +6,8 @@ export type RootStackParamList = {
   AuthIntro: undefined;
   GuidedSteps: undefined;
   Processing: undefined;
-  Verdict: undefined;
+  // scanId set when opened read-only from History; absent for the live flow (reads store).
+  Verdict: { scanId?: string } | undefined;
   Correction: undefined;
   History: undefined;
   Settings: undefined;

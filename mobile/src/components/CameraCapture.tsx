@@ -105,7 +105,14 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: "#000" },
   centered: { alignItems: "center", justifyContent: "center", padding: spacing.lg },
   permtext: { ...typography.body, color: palette.text, textAlign: "center", marginBottom: spacing.md },
-  overlay: { ...StyleSheet.absoluteFillObject, justifyContent: "space-between" },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "space-between",
+  },
   topBar: { flexDirection: "row", justifyContent: "flex-end", padding: spacing.md },
   overlayBody: { flex: 1, justifyContent: "center", padding: spacing.lg },
   frame: {
