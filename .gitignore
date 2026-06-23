@@ -1,0 +1,38 @@
+# --- .NET ---
+bin/
+obj/
+*.user
+appsettings.*.Local.json
+*.DotSettings.user
+
+# --- Node / Expo ---
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# --- Secrets / env ---
+*.env
+!*.env.example
+secrets/*.env
+
+# --- Mobile signing ---
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- Build / test output ---
+TestResults/
+coverage/
+*.log
+_deltest.tmp

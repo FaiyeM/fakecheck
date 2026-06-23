@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "FakeCheck",
+    "slug": "fakecheck",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "fakecheck",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "FakeCheck uses the camera to photograph items so they can be identified and authenticity-checked.",
+        "NSPhotoLibraryUsageDescription": "FakeCheck imports photos of items you want to check from your library."
+      }
+    },
+    "android": {
+      "package": "com.fakecheck.app",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-image-picker",
+      "expo-secure-store",
+      "expo-sqlite"
+    ]
+  }
+}

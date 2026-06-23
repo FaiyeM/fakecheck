@@ -1,0 +1,75 @@
+# FakeCheck Build — Progress Checkpoint
+
+This file is the single source of truth for build progress. The scheduled build agent reads it at the start of every run and updates it at the end. **Always commit this file with each chunk of work.**
+
+## How the agent resumes
+1. Read `FakeCheck_Build_Instructions.md` (the authoritative plan) and this file.
+2. Find the first phase below not marked ✅ done.
+3. Do as much of that phase as a single run allows. Commit frequently (one commit per logical step, per the instruction list's check-in gates).
+4. Run that phase's verification step. Only mark ✅ done if verification passes.
+5. Update the "Last run" notes + status table below, commit, and stop.
+6. If blocked on a credential/secret (see Blockers), mark the phase 🔶 blocked, record exactly what's needed, skip to the next unblocked phase, and continue.
+
+## Status
+
+| Phase | Name | Status | Notes |
+|---|---|---|---|
+| 0 | Prerequisites & tooling | ✅ done | Sandbox: Node 22 ✅; NO .NET SDK, NO Docker, allowlist proxy blocks npm/dotnet downloads (see Blockers) |
+| 1 | Repo & git & CI | 🔄 in progress | Structure + .gitignore + .editorconfig + README + ci.yml done & committed. CI run not verified (needs GitHub push). Git history in /tmp this run (mount blocks deletes → in-place .git unusable). |
+| 2 | Backend scaffold (.NET 10) | 🔄 code-complete | .sln + Infrastructure + Api projects written. Program.cs (Kestrel PORT bind, Serilog, Swagger, FluentValidation auto-validation, rate-limit by device id, ProblemDetails) + DI wiring done. `dotnet build` still pending SDK (proxy-blocked here) → verify via CI. |
+| 3 | Database & data model | 🔄 code-complete | FakeCheckDbContext (all §9.3 tables, jsonb, corrections index §8.2). DbSeeder upserts 4 categories + 16 products (fake_bar) + full auth-step flows from spec §6. docker-compose.dev.yml added. EF migration file + `dotnet ef`/`docker` run still pending SDK. |
+| 4 | Object storage (R2) | 🔶 creds present, live test blocked | R2StorageClient written (presigned PUT + ImageSharp EXIF strip). `secrets/backend.env` now has R2 keys, BUT live test still needs .NET SDK + network (both absent in sandbox) → verify on SDK/networked env. |
+| 5 | Vision integration & prompts | 🔄 in progress (creds present) | Prompt library COMPLETE; TieredVisionClient (Gemini ID + premium auth, JSON repair/fallback) + PromptLibrary loader written. `secrets/backend.env` now has Gemini + premium keys, BUT live vision call still needs .NET SDK + network (absent in sandbox). |
+| 6 | Verdict engine | 🔄 in progress | Engine + xUnit tests written (spec §7). Math cross-checked in Node: 18/18 pass (backend/tools/verify_verdict_math.mjs). `dotnet test` not run — no SDK. |
+| 7 | API endpoints | 🔄 code-complete | All 7 endpoints written (health, presign, identify, categories/{id}/steps, scans, auth/analyze, corrections) + FluentValidation validators + analyze orchestration (vision→engine→persist). Integration test against dockerized PG still pending SDK. |
+| 8 | Backend deploy (Railway) | 🔶 token present, deploy blocked | `RAILWAY_TOKEN` now in `secrets/backend.env`, BUT deploy needs the Railway CLI + network (absent in sandbox) → run from a networked session. |
+| 9 | Mobile scaffold (Expo 56) | 🔄 code-complete | Hand-written Expo SDK 56 scaffold: package.json (RN 0.85/React 19.2/newArch), app.json (camera perms), app.config.ts (EXPO_PUBLIC_API_URL→extra.apiUrl), tsconfig/babel, src/{theme,api,store,db,navigation,screens,components}. Typed axios+React Query client mirrors Dtos.cs (7 endpoints) + X-Device-Id (secure-store). Zustand scan store, expo-sqlite schema (scans/checks/correction_outbox), native-stack nav across 9 stub screens, App.tsx providers. JSON/JS validated; all imports declared. `npm install`/`expo start` NOT runnable in sandbox (proxy blocks npm) → versions best-effort, verify via `npm install`+`expo install --fix` on networked env. |
+| 10 | Mobile screens | ⬜ not started | 9 screens in flow order |
+| 11 | Local storage / offline | ⬜ not started | sqlite + offline queue + blur |
+| 12 | Learning loop | ⬜ not started | nightly export job |
+| 13 | Testing & hardening | ⬜ not started | unit/integration/e2e + security-review |
+| 14 | App builds & store prep | 🔶 needs creds | EAS, Apple/Google accounts |
+| 15 | Metrics | ⬜ not started | analytics instrumentation |
+
+Legend: ⬜ not started · 🔄 in progress · ✅ done · 🔶 blocked (needs input)
+
+## Build order the agent should follow
+Buildable now without external credentials: **6 → 2 → 3 → 7 → 5(prompts) → 9 → 10 → 11 → 12 → 1(CI) → 13 (offline parts)**.
+Deferred until Faye provides secrets: **4 (R2), 5(live vision), 8 (Railway deploy), 14 (store builds)**.
+
+Recommended first run: Phase 1 (repo+git) then Phase 2 (backend scaffold) then Phase 6 (verdict engine + tests).
+
+## Blockers — credentials Faye must provide
+Templates live in `secrets/` (`backend.env.example`, `mobile.env.example`). Faye copies each to the same name without `.example` and fills it in. At the start of each run, CHECK whether `secrets/backend.env` and `secrets/mobile.env` exist and are populated; if a blocked phase's required values are now present, unblock and build it.
+
+### ✅ UPDATE 2026-06-24: secrets are now POPULATED
+`secrets/backend.env` and `secrets/mobile.env` both exist and are filled (R2 keys, Vision Gemini + premium keys, RAILWAY_TOKEN, ConnectionStrings__Default; mobile EXPO_PUBLIC_API_URL + PostHog). So phases 4/5-live/8 are **no longer credential-blocked** — but they remain **environment-blocked in the build sandbox** (no .NET SDK, no Docker, npm/dotnet/nuget/railway network blocked). They can be verified/run on (a) GitHub Actions CI, or (b) a session with .NET 10 + Docker + Node + open network. Do NOT print these secret values.
+
+### ⚠️ Sandbox environment blocker (NEW — affects build verification)
+The scheduled-run sandbox has **Node 22 only**. It has **no .NET 10 SDK**, **no Docker**, and an **allowlist HTTP proxy that blocks npm registry and Microsoft/dotnet downloads** (cannot install the SDK or `npm install`). Consequences:
+- `dotnet build` / `dotnet test` / `dotnet ef` and `npx create-expo-app` / `npm ci` cannot run here. C#/Expo phases are written but their builds are verified only by CI (GitHub Actions) on push, or on a run that executes on a machine/agent with .NET 10 + Node + open network.
+- **Git in the project folder doesn't work** because the macOS-mounted filesystem disallows file deletion, so git's lock files get stuck. This run's git history lives in `/tmp/fakecheck-git` (wiped between runs). All source files persist normally. **Action for Faye:** run `git init` in the folder on your Mac to get a real, persistent repo (the files and commit-able tree are all there).
+- To fully build/verify backend + mobile, either (a) point CI at the repo and let GitHub Actions build, or (b) run a session on an environment with .NET 10 SDK + Docker + Node network access.
+
+- [ ] **GitHub**: target remote is **`git@github.com:FaiyeM/fakecheck.git`** (SSH; Faye uses an SSH key — do NOT use the HTTPS URL, it prompts for a token). Faye is creating the empty private repo `FaiyeM/fakecheck` and pushing `main`. Once pushed, GitHub Actions (`.github/workflows/ci.yml`, .NET 10 pinned) builds+tests the backend = the Option A verification path for Phases 2/3/6/7. Next run: if a remote is reachable, check CI status; otherwise keep building offline.
+- [ ] **Cloudflare R2** → `secrets/backend.env` (R2__*) → Phase 4.
+- [ ] **Vision APIs** → `secrets/backend.env` (Vision__Gemini__*, Vision__Premium__*) → live Phase 5.
+- [ ] **Railway** → `secrets/backend.env` (RAILWAY_TOKEN) → Phase 8 deploy.
+- [ ] **Apple Developer + Google Play**: accounts for Phase 14 store builds (interactive via EAS, no file).
+- [ ] **Mobile API URL** → `secrets/mobile.env` (EXPO_PUBLIC_API_URL) → set after Phase 8.
+
+## Run log
+_(newest first — each run appends 2-3 lines: date, what was done, what's next)_
+
+> ▶ **NEXT SESSION PICKUP:** Phase 9 (Expo scaffold) is code-complete. Start **Phase 10 — Mobile Screens** (no creds): build the 9 stub screens in `mobile/src/screens/` into real UIs in flow order (Home/Camera → IdentificationResult → AuthIntro → GuidedSteps → Processing → Verdict → Correction → History → Settings), one commit per screen group, wiring the existing React Query hooks (`src/api/hooks.ts`) and Zustand store (`src/store/scanStore.ts`). Use the theme tokens in `src/theme`. expo-camera/image-manipulator usage = Phase 10/11. `npm`/`expo` still can't run in sandbox — write code, verify via CI/local. Secrets are now present (see UPDATE above) but live R2/vision/Railway work still needs a networked + .NET/Docker session.
+
+- **2026-06-24 (run 3)** — Built **Phase 9 — Expo SDK 56 mobile scaffold** (no creds needed). Hand-wrote `mobile/`: package.json (Expo ~56, RN 0.85, React 19.2, newArch, expo-camera/image-picker/image-manipulator/sqlite/file-system/network/secure-store/constants, react-navigation native-stack, React Query, axios, zustand, reanimated+worklets, paper), app.json (camera/photo perms, plugins), app.config.ts (EXPO_PUBLIC_API_URL→expoConfig.extra.apiUrl), tsconfig/babel/eslint(flat)/jest configs, expo-env.d.ts, .gitignore, README. `src/`: theme (colors w/ confidence buckets ≥80/50-79/<50 + verdict colors, spacing/typography), api (axios client w/ X-Device-Id from secure-store, typed `types.ts` mirroring Dtos.cs + IdentificationResult, `endpoints.ts` for all 7 routes, React Query `hooks.ts`, queryClient), store (Zustand scan-flow), db (expo-sqlite schema: scans/checks/correction_outbox + indexes), navigation (native-stack, 9-route param list), 9 stub screens wired in flow order, components/Screen wrapper, App.tsx (SafeAreaProvider+QueryClient+NavigationContainer dark theme). Added a jest smoke test for confidenceColor. **Verification:** JSON files parse, babel/eslint configs `node --check` clean, non-ASCII scan clean (only a UI ellipsis string), and every external import cross-checked against package.json deps = all declared. Could NOT run `npm install`/`npx expo start`/`tsc`/jest (sandbox proxy blocks npm; no tsc) → versions best-effort, reconcile with `npm install` + `npx expo install --fix` on a networked env; that also generates the package-lock.json the CI mobile job now gates on.
+  Also: secrets are now POPULATED (R2, Vision Gemini+premium, RAILWAY_TOKEN, mobile API URL+PostHog) — updated status table + Blockers: phases 4/5-live/8 are no longer cred-blocked, only sandbox-env-blocked (no .NET/Docker/network). Re-gated CI mobile job on `mobile/package-lock.json` (was `package.json`) so CI stays green until deps are pinned (npm ci needs a lockfile).
+  Next: Phase 10 — build the 9 screens into real UIs. Git: in-folder `.git` still unusable (mount blocks unlink → stuck index.lock); commit mirrored to `/tmp` this run. Faye should `git init` the folder on macOS for a persistent repo.
+- **2026-06-23 (run 2)** — Made the backend code-complete. Added FakeCheck.sln + Infrastructure + Api projects; EF FakeCheckDbContext (all §9.3 tables, jsonb, §8.2 corrections index) + DbSeeder (4 categories, 16 products w/ fake_bar, full §6 auth-step flows); R2StorageClient (presign + ImageSharp EXIF strip); TieredVisionClient (Gemini ID + premium auth w/ JSON repair→inconclusive fallback) + PromptLibrary loader; ScanRepository; DI extension; all 7 controllers + FluentValidation validators; Program.cs (Kestrel PORT, Serilog, Swagger, rate-limit by X-Device-Id, ProblemDetails, startup migrate+seed); Dockerfile (repo-root context) + docker-compose.dev.yml. Phases 2/3/7 now 🔄 code-complete. Sandbox still has NO .NET SDK/Docker and proxy blocks npm/dotnet/nuget, so `dotnet build`/`dotnet test`/`dotnet ef`/`docker` could NOT run — backend builds must be verified by CI (GitHub Actions) or an SDK-equipped session. Brace/paren balance scan clean on all 18 new .cs files; verdict math re-verified 18/18 in Node.
+  Next: on an SDK/network env (or via CI) run `dotnet build` + `dotnet test`, generate the InitialSchema EF migration (`dotnet ef migrations add`), then start Phase 9 (Expo mobile scaffold). Provide `secrets/*.env` to unblock 4 (R2), 5-live (vision), 8 (Railway).
+  Git: in-folder `.git` still unusable (mount blocks unlink → stuck index.lock); this run's commit `687a9fd` lives in a throwaway `/tmp` mirror. All source files persist in the folder — Faye should run `git init` on macOS to get a real persistent repo.
+  Follow-up (same run): reconciled config to the secrets template so Faye's `.env` binds cleanly — R2 option props renamed to `BucketScans/BucketCorrections/BucketReference`, Gemini default → `gemini-flash-latest` (Options.cs, R2StorageClient, TieredVisionClient, appsettings.json). CI: build job already pins .NET 10 (Option A path); guarded the mobile job to skip until `mobile/package.json` exists so CI stays green pre-Phase-9; made the prompt-copy glob forward-slashed for Linux. appsettings.json + ci.yml validated.
+- **2026-06-23 (run 1)** — First build run. Sandbox has Node 22 but NO .NET SDK/Docker and a proxy that blocks npm/dotnet installs, so no dotnet/npm builds ran. Completed offline: Phase 1 repo+structure+CI; Phase 6 verdict engine + xUnit tests with math cross-verified in Node (18/18 pass); Phase 5 full prompt library (identify + 4 categories); Phase 2/3 partial = Core domain models + abstraction interfaces. Marked phases 🔄 where `dotnet build/test` could not be run (not faked).
+  Next: on an environment with .NET 10 + Node network (or via GitHub Actions CI), run `dotnet test` to green Phase 6, then wire Infrastructure (EF/Npgsql/R2) + Api (Program.cs, controllers, FluentValidation) for Phases 2/3/7, then Mobile scaffold (Phase 9). Provide `secrets/*.env` to unblock 4 (R2), 5-live (vision), 8 (Railway).
+  Note: git history is in /tmp this run — see Sandbox environment blocker; Faye should `git init` the folder on macOS for a persistent repo.

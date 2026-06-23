@@ -1,0 +1,19 @@
+# Expo / RN
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Env
+.env
+.env.local
+
+# Native
+*.keystore
+*.p8
+*.mobileprovision
+
+# Misc
+.DS_Store
+npm-debug.*

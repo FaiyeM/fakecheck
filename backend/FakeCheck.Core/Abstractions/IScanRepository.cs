@@ -1,0 +1,15 @@
+using FakeCheck.Core.Models;
+
+namespace FakeCheck.Core.Abstractions;
+
+/// <summary>Persistence boundary for scans, checks, verdicts, and corrections.</summary>
+public interface IScanRepository
+{
+    Task<Scan> CreateScanAsync(Scan scan, CancellationToken ct = default);
+    Task<Scan?> GetScanAsync(Guid scanId, CancellationToken ct = default);
+    Task<IReadOnlyList<AuthStep>> GetStepsAsync(string categoryId, CancellationToken ct = default);
+    Task<Product?> GetProductAsync(string productId, CancellationToken ct = default);
+    Task SaveChecksAsync(Guid scanId, IEnumerable<Check> checks, CancellationToken ct = default);
+    Task SaveVerdictAsync(Verdict verdict, CancellationToken ct = default);
+    Task SaveCorrectionAsync(Correction correction, CancellationToken ct = default);
+}
