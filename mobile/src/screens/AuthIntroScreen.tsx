@@ -13,7 +13,7 @@ export function AuthIntroScreen() {
   const navigation = useNavigation<Nav>();
   return (
     <Screen title="Authentication check">
-      <Text style={{ color: palette.textMuted }}>What we'll photograph (Phase 10).</Text>
+      <Text style={{ color: palette.textMuted }}>What we will photograph (Phase 10).</Text>
       <Button title="Start" onPress={() => navigation.navigate("GuidedSteps")} />
     </Screen>
   );
