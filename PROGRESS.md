@@ -51,12 +51,20 @@ The scheduled-run sandbox has **Node 22 only**. It has **no .NET 10 SDK**, **no 
 - **Git in the project folder doesn't work** because the macOS-mounted filesystem disallows file deletion, so git's lock files get stuck. This run's git history lives in `/tmp/fakecheck-git` (wiped between runs). All source files persist normally. **Action for Faye:** run `git init` in the folder on your Mac to get a real, persistent repo (the files and commit-able tree are all there).
 - To fully build/verify backend + mobile, either (a) point CI at the repo and let GitHub Actions build, or (b) run a session on an environment with .NET 10 SDK + Docker + Node network access.
 
-- [ ] **GitHub**: target remote is **`git@github.com:FaiyeM/fakecheck.git`** (SSH; Faye uses an SSH key — do NOT use the HTTPS URL, it prompts for a token). Faye is creating the empty private repo `FaiyeM/fakecheck` and pushing `main`. Once pushed, GitHub Actions (`.github/workflows/ci.yml`, .NET 10 pinned) builds+tests the backend = the Option A verification path for Phases 2/3/6/7. Next run: if a remote is reachable, check CI status; otherwise keep building offline.
-- [ ] **Cloudflare R2** → `secrets/backend.env` (R2__*) → Phase 4.
-- [ ] **Vision APIs** → `secrets/backend.env` (Vision__Gemini__*, Vision__Premium__*) → live Phase 5.
-- [ ] **Railway** → `secrets/backend.env` (RAILWAY_TOKEN) → Phase 8 deploy.
-- [ ] **Apple Developer + Google Play**: accounts for Phase 14 store builds (interactive via EAS, no file).
-- [ ] **Mobile API URL** → `secrets/mobile.env` (EXPO_PUBLIC_API_URL) → set after Phase 8.
+### 🔺 CURRENT TOP BLOCKER (2026-06-25): live scans fail + identification poor
+The Android internal-test build runs, but **every scan fails and identification is bad** (Faye, run-10 follow-up). Prime suspect from code review: the mobile→R2 upload (`uploadToPresignedUrl` PUTs an RN `Blob` via axios) lands empty/corrupt or 403s the SigV4 content-type, so `/identify` returns `unknown` and all auth checks downgrade to `inconclusive` (one upstream cause → both symptoms). **Recommended fix:** switch the PUT to `expo-file-system` `uploadAsync` (BINARY_CONTENT, `Content-Type: image/jpeg`). **To confirm which layer before changing code:** (a) `gh run list --repo FaiyeM/fakecheck` — is CI green on the pushed commit? (b) `railway logs` during one scan — look for `Identification failed`, R2 GetObject 403/404; (c) Cloudflare dashboard — is a non-zero `scans/YYYY/MM/DD/*.jpg` landing? The build sandbox has **no outbound network** (bash HTTP 000) and **no auth path to the private repo / Railway**, so Faye must paste the CI/log output (or a fetchable URL) for the agent to act.
+
+- [x] **GitHub**: repo live at `git@github.com:FaiyeM/fakecheck.git`, `main` pushed (Faye). CI (`.github/workflows/ci.yml`, .NET 10 pinned) is the Option-A verification path for Phases 2/3/6/7/13. ⚠️ The agent still can't read CI from the sandbox (no network/`gh`/repo auth) — Faye runs `gh run list` and pastes results.
+- [x] **Cloudflare R2** → keys in `secrets/backend.env`; set on Railway and exercised by the Phase-12 export. (Confirm objects land on the first good scan — see top blocker.)
+- [x] **Vision APIs** → Gemini + premium keys in `secrets/backend.env`, live on Railway. (Quality/round-trip unverified until scans succeed.)
+- [x] **Railway** → deployed & live; `/health` green (Phase 8 ✅).
+- [x] **Mobile API URL** → `EXPO_PUBLIC_API_URL` set in `secrets/mobile.env`.
+- [x] **PostHog SDK** → installed by Faye (`posthog-react-native`); Phase 15 now needs only the on-device dashboard-events check.
+- [x] **EAS CLI path** → `eas` is at `/opt/homebrew/bin/eas` (was shadowed by `clang`); use that path or alias it. `npx eas-cli …` also works.
+- [ ] **Apple Developer account** → Phase 14b iOS build/submit (`eas build/submit -p ios`). Still needed.
+- [ ] **Google Play "App content" forms** → upload `store-assets/*`, finish Data-safety/content-rating/target-audience (privacy URL already pasted). Faye finishing later.
+- [ ] **R2 30-day lifecycle rule** on the scans bucket (spec §14 photo deletion). Reminder for Faye — later.
+- [ ] **Backend build/test in-sandbox** → still no .NET 10 SDK/Docker and bash has no network to install one; verify via CI or a local `dotnet test` on Faye's Mac.
 
 ## Run log
 _(newest first — each run appends 2-3 lines: date, what was done, what's next)_
