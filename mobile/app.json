@@ -2,11 +2,18 @@
   "expo": {
     "name": "FakeCheck",
     "slug": "fakecheck",
+    "owner": "flossin",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "fakecheck",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3148a0de-be57-4d5e-84b4-31faa8cfb587"
+    },
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
@@ -15,14 +22,23 @@
       }
     },
     "android": {
-      "package": "com.fakecheck.app",
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+      "package": "com.flossinfakecheck.app",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "plugins": [
       "expo-camera",
       "expo-image-picker",
       "expo-secure-store",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:8080",
+      "eas": {
+        "projectId": "3148a0de-be57-4d5e-84b4-31faa8cfb587"
+      }
+    }
   }
 }
