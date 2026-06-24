@@ -17,6 +17,7 @@ import { useScanStore } from "../store/scanStore";
 import { useCreateScan, useIdentify } from "../api/hooks";
 import { uploadImageAsync } from "../api/upload";
 import { getDeviceId } from "../api/deviceId";
+import { analytics } from "../analytics";
 import { CATEGORIES, categoryLabel } from "../constants/categories";
 import { palette, radius, spacing, typography } from "../theme";
 import type { RootStackParamList } from "../navigation/types";
@@ -46,10 +47,18 @@ export function IdentificationResultScreen() {
       if (!primaryPhotoUri || identification) return;
       try {
         setError(null);
+        analytics.scanStarted();
         const imageKey = await uploadImageAsync(primaryPhotoUri);
         addPhoto({ checkId: "primary", localUri: primaryPhotoUri, imageKey });
         const result = await identify.mutateAsync(imageKey);
-        if (active) setIdentification(result);
+        if (active) {
+          setIdentification(result);
+          analytics.itemIdentified(
+            result.category,
+            result.productLine ?? null,
+            result.confidence
+          );
+        }
       } catch {
         if (active) setError("We couldn't analyze that photo. Try again with better lighting.");
       }
@@ -71,6 +80,7 @@ export function IdentificationResultScreen() {
         product: identification?.productLine ?? null,
       });
       setScanId(scanId);
+      analytics.fakeCheckStarted(categoryId, identification?.productLine ?? null);
       navigation.navigate("AuthIntro");
     } catch {
       setError("Couldn't start the check. Check your connection and retry.");

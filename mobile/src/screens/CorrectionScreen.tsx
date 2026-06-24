@@ -19,6 +19,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { useSubmitCorrection } from "../api/hooks";
 import { uploadImagesAsync } from "../api/upload";
 import { useScanStore } from "../store/scanStore";
+import { analytics } from "../analytics";
 import { markDisputedAndQueue } from "../db";
 import { palette, radius, spacing, typography } from "../theme";
 import type { CorrectionRequest } from "../api/types";
@@ -83,6 +84,12 @@ export function CorrectionScreen() {
         appVersion: Constants.expoConfig?.version ?? "0.0.0",
         platform: Platform.OS,
       };
+
+      analytics.correctionSubmitted(
+        categoryId,
+        verdict?.verdict ?? "inconclusive",
+        choice as Choice
+      );
 
       // Optimistic: tag the scan disputed + queue locally first (survives offline).
       await markDisputedAndQueue(scanId, JSON.stringify(body));

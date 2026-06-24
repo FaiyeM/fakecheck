@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -14,6 +14,7 @@ import { CameraCapture } from "../components/CameraCapture";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { useScanStore } from "../store/scanStore";
 import { uploadImageAsync } from "../api/upload";
+import { analytics } from "../analytics";
 import { palette, radius, spacing, typography } from "../theme";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -24,6 +25,7 @@ export function GuidedStepsScreen() {
   const navigation = useNavigation<Nav>();
   const steps = useScanStore((s) => s.steps);
   const addPhoto = useScanStore((s) => s.addPhoto);
+  const categoryId = useScanStore((s) => s.categoryId);
 
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -36,6 +38,16 @@ export function GuidedStepsScreen() {
   const step = ordered[index];
   const isLast = index >= ordered.length - 1;
   const canSkip = step && step.requirement !== "required";
+  const category = categoryId ?? "";
+
+  // Fire once when the guided flow's steps are first available (spec §15 funnel).
+  const viewedLogged = useRef(false);
+  useEffect(() => {
+    if (!viewedLogged.current && ordered.length > 0) {
+      viewedLogged.current = true;
+      analytics.authStepsViewed(category, ordered.length);
+    }
+  }, [ordered.length, category]);
 
   const advance = () => {
     if (isLast) {
@@ -45,6 +57,13 @@ export function GuidedStepsScreen() {
     }
   };
 
+  const handleSkip = () => {
+    if (step) {
+      analytics.authStepSkipped(category, step.checkId, index, step.requirement);
+    }
+    advance();
+  };
+
   const handleCapture = async (uri: string) => {
     if (!step) return;
     setBusy(true);
@@ -52,6 +71,7 @@ export function GuidedStepsScreen() {
     try {
       const imageKey = await uploadImageAsync(uri);
       addPhoto({ checkId: step.checkId, localUri: uri, imageKey });
+      analytics.authStepCompleted(category, step.checkId, index, step.requirement);
       advance();
     } catch {
       setError("Upload failed. Check your connection and retake this photo.");
@@ -103,7 +123,7 @@ export function GuidedStepsScreen() {
             {canSkip ? (
               <Pressable
                 accessibilityRole="button"
-                onPress={advance}
+                onPress={handleSkip}
                 disabled={busy}
                 style={styles.skip}
               >

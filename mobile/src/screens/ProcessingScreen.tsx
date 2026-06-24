@@ -13,6 +13,7 @@ import { Screen } from "../components/Screen";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { useAnalyze } from "../api/hooks";
 import { useScanStore } from "../store/scanStore";
+import { analytics } from "../analytics";
 import { categoryLabel } from "../constants/categories";
 import { palette, spacing, typography } from "../theme";
 import type { AnalyzePhoto } from "../api/types";
@@ -70,12 +71,21 @@ export function ProcessingScreen() {
     const analyzePhotos: AnalyzePhoto[] = photos
       .filter((p) => p.imageKey && p.checkId !== "primary")
       .map((p) => ({ checkId: p.checkId, imageKey: p.imageKey as string }));
+    const startedAt = Date.now();
     try {
       const result = await analyze.mutateAsync({
         scanId,
         itemCategory: categoryId,
         productId: productId ?? null,
         photos: analyzePhotos,
+      });
+      analytics.verdictReceived({
+        category: categoryId,
+        verdict: result.verdict,
+        confidence: result.overallConfidence,
+        durationMs: Date.now() - startedAt,
+        hardFail: result.hardFailTriggered,
+        checkCount: result.checks.length,
       });
       setVerdict(result);
       navigation.replace("Verdict");
@@ -105,6 +115,7 @@ export function ProcessingScreen() {
             <PrimaryButton
               title="Retry"
               onPress={() => {
+                analytics.scanRetried("analyze", categoryId ?? null);
                 started.current = true;
                 runAnalyze();
               }}
