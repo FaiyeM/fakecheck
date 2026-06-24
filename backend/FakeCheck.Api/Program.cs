@@ -5,6 +5,8 @@ using FakeCheck.Infrastructure.Data;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,9 +78,15 @@ if (builder.Configuration.GetValue("Database:MigrateOnStartup", true))
     {
         var db = scope.ServiceProvider.GetRequiredService<FakeCheckDbContext>();
         // No EF migrations are generated yet (the build sandbox has no .NET SDK), so create the
-        // schema directly from the model. Switch to db.Database.MigrateAsync() once a migration
-        // file exists. EnsureCreated is a no-op when the tables already exist.
-        await db.Database.EnsureCreatedAsync();
+        // schema directly from the model. NOTE: EnsureCreatedAsync only creates the schema when
+        // the *database* is absent — on managed Postgres (Railway) the database already exists but
+        // is empty, so we must create the model's tables explicitly via the relational creator.
+        // Switch to db.Database.MigrateAsync() once a migration file exists.
+        var creator = db.GetService<IRelationalDatabaseCreator>();
+        if (!await creator.ExistsAsync())
+            await creator.CreateAsync();          // create the database itself (local dev)
+        if (!await creator.HasTablesAsync())
+            await creator.CreateTablesAsync();    // create the model's tables in the existing DB
         await DbSeeder.SeedAsync(db, scope.ServiceProvider.GetService<ILogger<Program>>());
     }
     catch (Exception ex)
