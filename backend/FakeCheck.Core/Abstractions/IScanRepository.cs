@@ -12,4 +12,7 @@ public interface IScanRepository
     Task SaveChecksAsync(Guid scanId, IEnumerable<Check> checks, CancellationToken ct = default);
     Task SaveVerdictAsync(Verdict verdict, CancellationToken ct = default);
     Task SaveCorrectionAsync(Correction correction, CancellationToken ct = default);
+
+    /// <summary>Corrections submitted at or after <paramref name="since"/>, oldest first (learning-loop export).</summary>
+    Task<IReadOnlyList<Correction>> GetCorrectionsSinceAsync(DateTimeOffset since, CancellationToken ct = default);
 }

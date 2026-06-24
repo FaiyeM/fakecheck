@@ -54,3 +54,6 @@ public sealed record CorrectionRequest(
     string AppVersion,
     string Platform);
 public sealed record OkResponse(bool Ok);
+
+// ---- /admin/export (learning loop, spec §10.3) ----
+public sealed record ExportResponse(string Key, int RecordCount);

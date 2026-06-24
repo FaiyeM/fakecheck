@@ -2,6 +2,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using FakeCheck.Core.Abstractions;
 using FakeCheck.Infrastructure.Data;
+using FakeCheck.Infrastructure.Learning;
 using FakeCheck.Infrastructure.Repositories;
 using FakeCheck.Infrastructure.Storage;
 using FakeCheck.Infrastructure.Vision;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         // Options
         services.Configure<R2Options>(config.GetSection(R2Options.Section));
         services.Configure<VisionOptions>(config.GetSection(VisionOptions.Section));
+        services.Configure<ExportOptions>(config.GetSection(ExportOptions.Section));
 
         // R2 (S3-compatible). Built from R2Options at resolve time.
         services.AddSingleton<IAmazonS3>(sp =>
@@ -50,6 +52,10 @@ public static class DependencyInjection
         services.AddScoped<IStorageClient, R2StorageClient>();
         services.AddScoped<IVisionClient, TieredVisionClient>();
         services.AddScoped<IScanRepository, ScanRepository>();
+
+        // Learning loop (spec §10.3): exporter + in-process nightly cron.
+        services.AddScoped<IDatasetExporter, CorrectionsExporter>();
+        services.AddHostedService<NightlyExportService>();
 
         return services;
     }

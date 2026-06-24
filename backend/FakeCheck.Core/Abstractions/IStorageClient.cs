@@ -11,4 +11,10 @@ public interface IStorageClient
 
     /// <summary>Copy an object into the corrections bucket with EXIF/GPS stripped (spec §14).</summary>
     Task<string> CopyToCorrectionsStrippedAsync(string sourceKey, CancellationToken ct = default);
+
+    /// <summary>
+    /// Write a labeled training dataset (e.g. JSONL) into the corrections bucket under
+    /// <paramref name="key"/> (spec §10.3 learning loop). Returns the stored object key.
+    /// </summary>
+    Task<string> PutCorrectionsDatasetAsync(string key, byte[] content, string contentType, CancellationToken ct = default);
 }

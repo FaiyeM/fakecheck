@@ -1,5 +1,17 @@
 namespace FakeCheck.Infrastructure;
 
+/// <summary>Learning-loop export settings (spec §10.3). Bound from the <c>Export</c> config section.</summary>
+public sealed class ExportOptions
+{
+    public const string Section = "Export";
+    /// <summary>Run the in-process nightly export cron.</summary>
+    public bool Enabled { get; set; } = true;
+    /// <summary>UTC hour (0–23) the nightly export fires.</summary>
+    public int RunHourUtc { get; set; } = 7;
+    /// <summary>Shared secret for the manual <c>POST /admin/export</c> trigger (X-Admin-Token). Empty ⇒ endpoint disabled.</summary>
+    public string AdminToken { get; set; } = "";
+}
+
 /// <summary>Cloudflare R2 settings (S3-compatible). Bound from the <c>R2</c> config section.</summary>
 public sealed class R2Options
 {

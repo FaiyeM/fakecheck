@@ -56,4 +56,11 @@ public sealed class ScanRepository : IScanRepository
         _db.Corrections.Add(correction);
         await _db.SaveChangesAsync(ct);
     }
+
+    public async Task<IReadOnlyList<Correction>> GetCorrectionsSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
+        await _db.Corrections
+            .Where(c => c.SubmittedAt >= since)
+            .OrderBy(c => c.SubmittedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
 }

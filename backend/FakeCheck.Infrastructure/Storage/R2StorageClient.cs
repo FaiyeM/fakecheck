@@ -78,4 +78,20 @@ public sealed class R2StorageClient : IStorageClient
         _log.LogInformation("Copied {Source} → corrections/{Dest} (EXIF stripped)", sourceKey, destKey);
         return destKey;
     }
+
+    public async Task<string> PutCorrectionsDatasetAsync(string key, byte[] content, string contentType, CancellationToken ct = default)
+    {
+        await using var stream = new MemoryStream(content, writable: false);
+        await _s3.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = _opts.BucketCorrections,
+            Key = key,
+            InputStream = stream,
+            ContentType = contentType,
+            DisablePayloadSigning = true // R2 compatibility
+        }, ct);
+
+        _log.LogInformation("Wrote dataset {Key} ({Bytes} bytes) to corrections bucket", key, content.Length);
+        return key;
+    }
 }
