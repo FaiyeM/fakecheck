@@ -47,12 +47,3 @@ export async function submitCorrection(body: CorrectionRequest): Promise<OkRespo
   const { data } = await api.post<OkResponse>("/corrections", body);
   return data;
 }
-
-// Uploads a binary blob to a presigned R2 PUT URL (no auth header, raw body).
-export async function uploadToPresignedUrl(url: string, blob: Blob): Promise<void> {
-  await api.put(url, blob, {
-    baseURL: "",
-    headers: { "Content-Type": blob.type || "image/jpeg" },
-    transformRequest: (d) => d,
-  });
-}
