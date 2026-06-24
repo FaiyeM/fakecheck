@@ -75,11 +75,15 @@ if (builder.Configuration.GetValue("Database:MigrateOnStartup", true))
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<FakeCheckDbContext>();
+        // No EF migrations are generated yet (the build sandbox has no .NET SDK), so create the
+        // schema directly from the model. Switch to db.Database.MigrateAsync() once a migration
+        // file exists. EnsureCreated is a no-op when the tables already exist.
+        await db.Database.EnsureCreatedAsync();
         await DbSeeder.SeedAsync(db, scope.ServiceProvider.GetService<ILogger<Program>>());
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Startup migration/seed skipped — database not reachable yet.");
+        app.Logger.LogError(ex, "Startup schema-create/seed failed (DB unreachable or schema error).");
     }
 }
 
