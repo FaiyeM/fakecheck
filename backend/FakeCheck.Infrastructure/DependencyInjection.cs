@@ -21,9 +21,21 @@ public static class DependencyInjection
         // Priority: Railway's injected DATABASE_URL (postgres:// URI, auto-converted), else an
         // explicit ConnectionStrings__Default, else a local dev default. DATABASE_URL must take
         // precedence over the appsettings.json localhost default so the managed DB is actually used.
-        var conn = ConvertDatabaseUrl(Environment.GetEnvironmentVariable("DATABASE_URL"))
-                   ?? config.GetConnectionString("Default")
+        var databaseUrl = ConvertDatabaseUrl(Environment.GetEnvironmentVariable("DATABASE_URL"));
+        var configDefault = config.GetConnectionString("Default");
+        var conn = databaseUrl
+                   ?? configDefault
                    ?? "Host=localhost;Port=5432;Database=fakecheck;Username=postgres;Password=dev";
+
+        // Startup diagnostic (no secrets): which source won and which host we'll dial.
+        var dbSource = databaseUrl is not null ? "DATABASE_URL"
+                     : configDefault is not null ? "ConnectionStrings:Default"
+                     : "localhost-fallback";
+        var dbHost = "unknown";
+        try { dbHost = new Npgsql.NpgsqlConnectionStringBuilder(conn).Host ?? "unknown"; }
+        catch { /* ignore parse issues, host stays "unknown" */ }
+        Console.WriteLine($"[startup] EF Postgres source={dbSource} host={dbHost}");
+
         services.AddDbContext<FakeCheckDbContext>(o => o.UseNpgsql(conn));
 
         // Options
