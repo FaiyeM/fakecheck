@@ -59,8 +59,10 @@ export function IdentificationResultScreen() {
             result.confidence
           );
         }
-      } catch {
-        if (active) setError("We couldn't analyze that photo. Try again with better lighting.");
+      } catch (e) {
+        // TEMP diagnostic: surface the real failure (upload status/body or identify error)
+        // instead of the generic lighting message, so we can see why scans fail on device.
+        if (active) setError(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
       }
     })();
     return () => {
