@@ -7,6 +7,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,6 +112,18 @@ if (builder.Configuration.GetValue("Database:MigrateOnStartup", true))
     {
         (startupLog ?? app.Logger).LogError(ex, "Startup schema-create/seed failed.");
     }
+}
+
+// --- R2 storage config diagnostic (no secrets) — confirms storage is wired before first upload. ---
+using (var r2scope = app.Services.CreateScope())
+{
+    var r2 = r2scope.ServiceProvider.GetRequiredService<IOptions<R2Options>>().Value;
+    var r2host = "UNSET";
+    if (!string.IsNullOrWhiteSpace(r2.Endpoint) && Uri.TryCreate(r2.Endpoint, UriKind.Absolute, out var u))
+        r2host = u.Host;
+    app.Logger.LogInformation(
+        "[startup] R2 configured={Cfg} endpoint={Host} buckets={Scans}/{Corr}/{Ref}",
+        r2.IsConfigured, r2host, r2.BucketScans, r2.BucketCorrections, r2.BucketReference);
 }
 
 app.Run();

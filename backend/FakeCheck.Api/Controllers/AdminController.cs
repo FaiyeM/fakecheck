@@ -17,11 +17,13 @@ public sealed class AdminController : ControllerBase
 {
     private readonly IDatasetExporter _exporter;
     private readonly ExportOptions _opts;
+    private readonly ILogger<AdminController> _log;
 
-    public AdminController(IDatasetExporter exporter, IOptions<ExportOptions> opts)
+    public AdminController(IDatasetExporter exporter, IOptions<ExportOptions> opts, ILogger<AdminController> log)
     {
         _exporter = exporter;
         _opts = opts.Value;
+        _log = log;
     }
 
     /// <summary>Manually run the corrections export over the last <paramref name="sinceDays"/> days.</summary>
@@ -45,8 +47,9 @@ public sealed class AdminController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Admin-only endpoint: surface the real cause to speed up diagnosis
+            // Admin-only endpoint: log AND surface the real cause to speed up diagnosis
             // (most likely R2 bucket/credentials/endpoint config).
+            _log.LogError(ex, "Export failed: {Type}: {Message}", ex.GetType().Name, ex.Message);
             return Problem(
                 title: "Export failed",
                 detail: $"{ex.GetType().Name}: {ex.Message}",
