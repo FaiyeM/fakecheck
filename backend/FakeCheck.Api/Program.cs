@@ -74,24 +74,42 @@ app.MapControllers();
 if (builder.Configuration.GetValue("Database:MigrateOnStartup", true))
 {
     using var scope = app.Services.CreateScope();
+    var startupLog = scope.ServiceProvider.GetService<ILogger<Program>>();
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<FakeCheckDbContext>();
-        // No EF migrations are generated yet (the build sandbox has no .NET SDK), so create the
-        // schema directly from the model. NOTE: EnsureCreatedAsync only creates the schema when
-        // the *database* is absent — on managed Postgres (Railway) the database already exists but
-        // is empty, so we must create the model's tables explicitly via the relational creator.
-        // Switch to db.Database.MigrateAsync() once a migration file exists.
+
+        // No EF migrations exist yet (the build sandbox has no .NET SDK), so bootstrap the schema
+        // directly from the model. We deliberately do NOT use EnsureCreated/HasTables — both
+        // misbehave on a managed-but-empty Postgres (EnsureCreated no-ops because the database
+        // already exists). Instead: probe for a known table, and if it's absent run the model's
+        // full CREATE script. Idempotent and provider-agnostic. Switch to MigrateAsync() once a
+        // migration file is generated on an SDK-equipped environment.
         var creator = db.GetService<IRelationalDatabaseCreator>();
         if (!await creator.ExistsAsync())
-            await creator.CreateAsync();          // create the database itself (local dev)
-        if (!await creator.HasTablesAsync())
-            await creator.CreateTablesAsync();    // create the model's tables in the existing DB
-        await DbSeeder.SeedAsync(db, scope.ServiceProvider.GetService<ILogger<Program>>());
+        {
+            await creator.CreateAsync();
+            startupLog?.LogInformation("Startup: database did not exist — created it.");
+        }
+
+        bool hasSchema;
+        try { _ = await db.Categories.AnyAsync(); hasSchema = true; }
+        catch { hasSchema = false; }
+        startupLog?.LogInformation("Startup: categories table present = {Has}", hasSchema);
+
+        if (!hasSchema)
+        {
+            var script = db.Database.GenerateCreateScript();
+            await db.Database.ExecuteSqlRawAsync(script);
+            startupLog?.LogInformation("Startup: schema created from model ({Len} chars of DDL).", script.Length);
+        }
+
+        await DbSeeder.SeedAsync(db, startupLog);
+        startupLog?.LogInformation("Startup: schema + seed complete.");
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Startup schema-create/seed failed (DB unreachable or schema error).");
+        (startupLog ?? app.Logger).LogError(ex, "Startup schema-create/seed failed.");
     }
 }
 
