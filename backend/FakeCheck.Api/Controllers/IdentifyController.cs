@@ -1,11 +1,13 @@
 using FakeCheck.Api.Dtos;
 using FakeCheck.Core.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FakeCheck.Api.Controllers;
 
 [ApiController]
 [Route("identify")]
+[EnableRateLimiting("vision")]
 public sealed class IdentifyController : ControllerBase
 {
     private readonly IVisionClient _vision;

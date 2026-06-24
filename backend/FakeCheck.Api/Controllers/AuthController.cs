@@ -5,6 +5,7 @@ using FakeCheck.Core.Models;
 using FakeCheck.Infrastructure;
 using FakeCheck.Infrastructure.Vision;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace FakeCheck.Api.Controllers;
@@ -39,6 +40,7 @@ public sealed class AuthController : ControllerBase
     /// (weights, thresholds, per-product fake bar, hard fails, required-step gate).
     /// </summary>
     [HttpPost("analyze")]
+    [EnableRateLimiting("vision")]
     [ProducesResponseType(typeof(AnalyzeResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<AnalyzeResponse>> Analyze([FromBody] AnalyzeRequest req, CancellationToken ct)
     {

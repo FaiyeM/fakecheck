@@ -11,8 +11,8 @@ live pen-test against the staging deploy. **No high-severity findings.**
 
 | # | Finding | Severity | Status |
 |---|---|---|---|
-| 1 | Swagger UI enabled by default in production | Medium | Open — recommend default-off in prod |
-| 2 | Rate limiter partitions by client-supplied `X-Device-Id` (spoofable) | Medium | Open — cost/abuse risk on vision endpoints |
+| 1 | Swagger UI enabled by default in production | Medium | **Resolved** (2026-06-24) — `Swagger:Enabled` now defaults `false`; dev still on |
+| 2 | Rate limiter partitions by client-supplied `X-Device-Id` (spoofable) | Medium | **Resolved** (2026-06-24) — added chained per-IP `"vision"` limiter on `/identify` + `/auth/analyze` (20/min) |
 | 3 | Presigned PUT has no upload size cap | Low–Medium | Accepted tradeoff — note |
 | 4 | `/admin/export` returns raw exception detail to caller | Low | Accepted (token-gated, aids ops) |
 | 5 | User free-text `explanation` exported to R2 dataset may contain PII | Low | Note for dataset handling |

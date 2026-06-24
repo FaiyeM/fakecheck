@@ -38,7 +38,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "FakeCheck API", Version = "v1" }));
 
-// --- Rate limit by anonymous device id (spec Phase 7). ---
+// --- Rate limiting (spec Phase 7). ---
+// Two layers run together on the paid vision endpoints:
+//   • Global limiter: 60/min per anonymous device id (broad fairness).
+//   • "vision" policy: a tighter per-IP fixed window applied to /identify and /auth/analyze.
+// X-Device-Id is client-supplied and can be rotated to defeat the global cap, so the per-IP
+// limiter bounds the cost of the paid vision calls regardless of the device header
+// (SECURITY_REVIEW.md finding #2).
+var globalPerDevice = builder.Configuration.GetValue("RateLimit:GlobalPerDevicePerMinute", 60);
+var visionPerIp = builder.Configuration.GetValue("RateLimit:VisionPerIpPerMinute", 20);
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -49,7 +57,17 @@ builder.Services.AddRateLimiter(options =>
                        ?? "anonymous";
         return RateLimitPartition.GetFixedWindowLimiter(deviceId, _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 60,
+            PermitLimit = globalPerDevice,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+    options.AddPolicy("vision", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = visionPerIp,
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0
         });
@@ -61,7 +79,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled", true))
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Enabled", false))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FakeCheck API v1"));
