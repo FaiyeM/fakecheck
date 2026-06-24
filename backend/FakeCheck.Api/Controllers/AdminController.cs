@@ -38,7 +38,19 @@ public sealed class AdminController : ControllerBase
 
         var days = sinceDays > 0 ? sinceDays : 1;
         var since = DateTimeOffset.UtcNow.AddDays(-days);
-        var result = await _exporter.ExportCorrectionsAsync(since, ct);
-        return Ok(new ExportResponse(result.Key, result.RecordCount));
+        try
+        {
+            var result = await _exporter.ExportCorrectionsAsync(since, ct);
+            return Ok(new ExportResponse(result.Key, result.RecordCount));
+        }
+        catch (Exception ex)
+        {
+            // Admin-only endpoint: surface the real cause to speed up diagnosis
+            // (most likely R2 bucket/credentials/endpoint config).
+            return Problem(
+                title: "Export failed",
+                detail: $"{ex.GetType().Name}: {ex.Message}",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 }
