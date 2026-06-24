@@ -1,4 +1,5 @@
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system/legacy";
 import { useSettingsStore } from "../store/settingsStore";
 import type { CameraQuality } from "../store/settingsStore";
 
@@ -21,16 +22,19 @@ const ASSESS_WIDTH = 900;
 
 export interface PreparedImage {
   uri: string;
-  blob: Blob;
   width: number;
   height: number;
   blurScore: number; // 0..1, higher = sharper
   isLikelyBlurry: boolean;
 }
 
-async function blobOf(uri: string): Promise<Blob> {
-  const res = await fetch(uri);
-  return res.blob();
+// Byte size of a local file. We deliberately use getInfoAsync rather than
+// fetch(uri).blob(): on Android, React Native's fetch throws "Network request
+// failed" for file:// URIs, which crashed the whole upload flow before a single
+// byte was sent.
+async function fileSize(uri: string): Promise<number> {
+  const info = await FileSystem.getInfoAsync(uri);
+  return info.exists ? info.size : 0;
 }
 
 function bytesPerPixel(size: number, w: number, h: number): number {
@@ -53,11 +57,10 @@ export async function prepareImageForUpload(uri: string): Promise<PreparedImage>
     format: SaveFormat.JPEG,
   });
 
-  const blob = await blobOf(out.uri);
-  const bpp = bytesPerPixel(blob.size, out.width, out.height);
+  const size = await fileSize(out.uri);
+  const bpp = bytesPerPixel(size, out.width, out.height);
   return {
     uri: out.uri,
-    blob,
     width: out.width,
     height: out.height,
     blurScore: Math.min(1, bpp / 0.5),
@@ -82,8 +85,8 @@ export async function assessCapture(
     compress: 0.7,
     format: SaveFormat.JPEG,
   });
-  const blob = await blobOf(out.uri);
-  const bpp = bytesPerPixel(blob.size, out.width, out.height);
+  const size = await fileSize(out.uri);
+  const bpp = bytesPerPixel(size, out.width, out.height);
   const hasCameraExif = !!(
     exif &&
     (exif.Make || exif.LensMake || exif.DateTimeOriginal || exif.FNumber)
