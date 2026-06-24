@@ -18,10 +18,11 @@ public static class DependencyInjection
     public static IServiceCollection AddFakeCheckInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         // EF Core / Postgres.
-        // Priority: explicit ConnectionStrings__Default, else Railway's injected
-        // DATABASE_URL (postgres:// URI, auto-converted), else a local dev default.
-        var conn = config.GetConnectionString("Default")
-                   ?? ConvertDatabaseUrl(Environment.GetEnvironmentVariable("DATABASE_URL"))
+        // Priority: Railway's injected DATABASE_URL (postgres:// URI, auto-converted), else an
+        // explicit ConnectionStrings__Default, else a local dev default. DATABASE_URL must take
+        // precedence over the appsettings.json localhost default so the managed DB is actually used.
+        var conn = ConvertDatabaseUrl(Environment.GetEnvironmentVariable("DATABASE_URL"))
+                   ?? config.GetConnectionString("Default")
                    ?? "Host=localhost;Port=5432;Database=fakecheck;Username=postgres;Password=dev";
         services.AddDbContext<FakeCheckDbContext>(o => o.UseNpgsql(conn));
 
