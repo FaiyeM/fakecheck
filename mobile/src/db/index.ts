@@ -157,3 +157,23 @@ export async function markDisputedAndQueue(scanId: string, payload: string): Pro
     new Date().toISOString()
   );
 }
+
+export interface OutboxRow {
+  id: number;
+  scan_id: string;
+  payload: string;
+}
+
+/** Unsynced queued corrections, oldest first (drained by the Phase 11 flush on reconnect). */
+export async function getUnsyncedCorrections(): Promise<OutboxRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<OutboxRow>(
+    `SELECT id, scan_id, payload FROM correction_outbox WHERE synced = 0 ORDER BY id`
+  );
+}
+
+/** Mark a queued correction as delivered so it won't be re-sent. */
+export async function markCorrectionSynced(id: number): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`UPDATE correction_outbox SET synced = 1 WHERE id = ?`, id);
+}

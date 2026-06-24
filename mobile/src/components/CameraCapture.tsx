@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import { assessCapture } from "../api/imagePipeline";
 import { palette, radius, spacing, typography } from "../theme";
 import { PrimaryButton } from "./PrimaryButton";
 
@@ -37,12 +38,36 @@ export function CameraCapture({ onCapture, overlay, busy }: Props) {
     );
   }
 
+  // Prompt a retake on a blurry or non-camera (screenshot/stripped) image (spec §13).
+  const acceptOrPrompt = async (uri: string, exif?: Record<string, unknown> | null) => {
+    let warning: string | null = null;
+    try {
+      const { isLikelyBlurry, hasCameraExif } = await assessCapture(uri, exif);
+      if (isLikelyBlurry) {
+        warning = "This photo looks blurry. A sharper shot gives a more reliable result.";
+      } else if (!hasCameraExif) {
+        warning =
+          "This looks like a screenshot or saved image. Use a photo you took of the real item for the best result.";
+      }
+    } catch {
+      // Assessment is best-effort; never block a capture on it.
+    }
+    if (!warning) {
+      onCapture(uri);
+      return;
+    }
+    Alert.alert("Check your photo", warning, [
+      { text: "Retake", style: "cancel" },
+      { text: "Use anyway", onPress: () => onCapture(uri) },
+    ]);
+  };
+
   const takePhoto = async () => {
     if (!cameraRef.current || capturing) return;
     setCapturing(true);
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.9 });
-      if (photo?.uri) onCapture(photo.uri);
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.9, exif: true });
+      if (photo?.uri) await acceptOrPrompt(photo.uri, photo.exif);
     } finally {
       setCapturing(false);
     }
@@ -52,8 +77,11 @@ export function CameraCapture({ onCapture, overlay, busy }: Props) {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 0.9,
+      exif: true,
     });
-    if (!res.canceled && res.assets[0]?.uri) onCapture(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]?.uri) {
+      await acceptOrPrompt(res.assets[0].uri, res.assets[0].exif);
+    }
   };
 
   return (
