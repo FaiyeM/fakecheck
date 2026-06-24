@@ -55,7 +55,14 @@ public static class DependencyInjection
                     : r2.Endpoint,
                 ForcePathStyle = true,
                 // R2 ignores region but the SDK requires one to be set.
-                AuthenticationRegion = "auto"
+                AuthenticationRegion = "auto",
+                // AWSSDK.S3 ≥3.7.4xx adds a CRC32 integrity checksum to requests (and to the
+                // SIGNED headers of presigned PUT URLs) by default. Cloudflare R2 doesn't
+                // support it and rejects the upload ("Header 'x-amz-checksum-crc32' not
+                // implemented"), which left the scans bucket empty and broke every scan.
+                // WhenRequired restores the clean presign (X-Amz-SignedHeaders=host) R2 expects.
+                RequestChecksumCalculation = RequestChecksumCalculation.WhenRequired,
+                ResponseChecksumValidation = ResponseChecksumValidation.WhenRequired
             };
             return new AmazonS3Client(creds, s3Config);
         });
