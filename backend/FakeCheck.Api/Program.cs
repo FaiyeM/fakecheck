@@ -148,6 +148,14 @@ using (var r2scope = app.Services.CreateScope())
 using (var visionScope = app.Services.CreateScope())
 {
     var opts = visionScope.ServiceProvider.GetRequiredService<IOptions<VisionOptions>>().Value;
+    
+    var envKeys = Environment.GetEnvironmentVariables().Keys.Cast<string>()
+        .Where(k => k.Contains("Vision", StringComparison.OrdinalIgnoreCase) || k.Contains("Gemini", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+    
+    app.Logger.LogInformation(
+        "[startup] Vision environment keys: {EnvKeys}", string.Join(", ", envKeys));
+        
     app.Logger.LogInformation(
         "[startup] Vision Gemini configured={GeminiCfg} model={GeminiModel}; Premium configured={PremiumCfg} provider={PremiumProv} model={PremiumModel}",
         opts.Gemini.IsConfigured, opts.Gemini.Model, opts.Premium.IsConfigured, opts.Premium.Provider, opts.Premium.Model);
