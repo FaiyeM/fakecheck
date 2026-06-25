@@ -3,9 +3,9 @@ import Constants from "expo-constants";
 import { getDeviceId } from "./deviceId";
 
 const apiUrl =
-  (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ??
   process.env.EXPO_PUBLIC_API_URL ??
-  "http://localhost:8080";
+  (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ??
+  "https://fakecheck-production.up.railway.app";
 
 export const api = axios.create({
   baseURL: apiUrl,

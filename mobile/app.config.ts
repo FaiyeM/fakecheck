@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   slug: config.slug ?? "fakecheck",
   extra: {
     ...config.extra,
-    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080",
+    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "https://fakecheck-production.up.railway.app",
     posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY ?? "",
     posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
   },
