@@ -144,6 +144,15 @@ using (var r2scope = app.Services.CreateScope())
         r2.IsConfigured, r2host, r2.BucketScans, r2.BucketCorrections, r2.BucketReference);
 }
 
+// --- Vision config diagnostic (no secrets) — confirms Gemini/Premium are wired at startup. ---
+using (var visionScope = app.Services.CreateScope())
+{
+    var opts = visionScope.ServiceProvider.GetRequiredService<IOptions<VisionOptions>>().Value;
+    app.Logger.LogInformation(
+        "[startup] Vision Gemini configured={GeminiCfg} model={GeminiModel}; Premium configured={PremiumCfg} provider={PremiumProv} model={PremiumModel}",
+        opts.Gemini.IsConfigured, opts.Gemini.Model, opts.Premium.IsConfigured, opts.Premium.Provider, opts.Premium.Model);
+}
+
 app.Run();
 
 /// <summary>Exposed for WebApplicationFactory-based integration tests.</summary>
