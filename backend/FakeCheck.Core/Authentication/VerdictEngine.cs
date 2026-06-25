@@ -24,24 +24,8 @@ public static class VerdictEngine
 
         var disclaimer = Disclaimer;
 
-        // 1) Required-step gate (spec §13): cannot produce a verdict until all required steps have photos.
-        var missingRequired = (input.Steps ?? Array.Empty<StepStatus>())
-            .Where(s => s.Required && !s.HasPhoto)
-            .Select(s => s.StepId)
-            .ToArray();
-
-        if (missingRequired.Length > 0)
-        {
-            return new VerdictResult(
-                Verdict: VerdictKind.Inconclusive,
-                OverallConfidence: 0.0,
-                HardFailTriggered: false,
-                CanProduceVerdict: false,
-                MissingRequiredSteps: missingRequired,
-                UncertainChecks: Array.Empty<string>(),
-                SuggestedVerificationServices: Array.Empty<string>(),
-                Disclaimer: disclaimer);
-        }
+        // 1) Required-step gate: bypassed (all fields are optional).
+        var missingRequired = Array.Empty<string>();
 
         var checks = input.Checks ?? Array.Empty<CheckInput>();
         var uncertain = checks

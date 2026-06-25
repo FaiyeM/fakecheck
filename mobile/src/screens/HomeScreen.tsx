@@ -29,7 +29,7 @@ export function HomeScreen() {
         overlay={
           <SafeAreaView style={styles.hintWrap} pointerEvents="box-none">
             <Text style={styles.hint}>
-              Point at a sneaker, handbag, Pokémon card, or watch
+              Point and shoot and I&apos;ll tell you what it is
             </Text>
           </SafeAreaView>
         }

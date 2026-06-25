@@ -53,7 +53,7 @@ export function AuthIntroScreen() {
           <Text style={styles.lead}>
             {count} MORE PHOTO{count === 1 ? "" : "S"} — APPROX. 60–90 SECONDS.
           </Text>
-          <Text style={styles.subhead}>GUIDED STEPS REQUIRED:</Text>
+          <Text style={styles.subhead}>GUIDED STEPS (ALL OPTIONAL):</Text>
 
           <FlatList
             data={steps}
@@ -66,9 +66,7 @@ export function AuthIntroScreen() {
                 </View>
                 <View style={styles.rowBody}>
                   <Text style={styles.rowTitle}>{item.instructionTitle.toUpperCase()}</Text>
-                  {item.requirement !== "required" && (
-                    <Text style={styles.optional}>{item.requirement}</Text>
-                  )}
+                  <Text style={styles.optional}>OPTIONAL</Text>
                 </View>
               </View>
             )}

@@ -37,7 +37,7 @@ export function GuidedStepsScreen() {
   );
   const step = ordered[index];
   const isLast = index >= ordered.length - 1;
-  const canSkip = step && step.requirement !== "required";
+  const canSkip = true;
   const category = categoryId ?? "";
 
   // Fire once when the guided flow's steps are first available (spec §15 funnel).
@@ -102,8 +102,7 @@ export function GuidedStepsScreen() {
               <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
             </View>
             <Text style={styles.counter}>
-              STEP {index + 1} OF {ordered.length}
-              {step.requirement !== "required" ? `  ·  ${step.requirement.toUpperCase()}` : ""}
+              STEP {index + 1} OF {ordered.length}  ·  OPTIONAL
             </Text>
 
             <View style={styles.card}>

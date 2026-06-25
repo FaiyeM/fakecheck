@@ -106,7 +106,7 @@ public class VerdictEngineTests
     // ---- Required-step gate (spec §13) ----
 
     [Fact]
-    public void MissingRequiredStep_BlocksVerdict()
+    public void MissingRequiredStep_DoesNotBlockVerdict()
     {
         var steps = new[]
         {
@@ -117,10 +117,9 @@ public class VerdictEngineTests
 
         var result = VerdictEngine.Evaluate(Input(new[] { Check(95, 1) }, steps: steps));
 
-        Assert.False(result.CanProduceVerdict);
-        Assert.Equal(VerdictKind.Inconclusive, result.Verdict);
-        Assert.Contains("sole", result.MissingRequiredSteps);
-        Assert.DoesNotContain("insole", result.MissingRequiredSteps);
+        Assert.True(result.CanProduceVerdict);
+        Assert.Equal(VerdictKind.Authentic, result.Verdict);
+        Assert.Empty(result.MissingRequiredSteps);
     }
 
     [Fact]

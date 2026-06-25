@@ -55,8 +55,9 @@ public sealed class TieredVisionClient : IVisionClient
         {
             var b64 = await LoadBase64Async(imageKey, ct);
             var prompt =
-                "Identify this item. It can be any category of object, collectible, or everyday item. " +
-                "Determine the category, brand, model, release/manufacturing year, and original retail price if known. " +
+                "Identify this item. It can be absolutely any category of object, collectible, furniture, electronics, clothing, apparel, appliance, or everyday item. " +
+                "Determine the category (e.g. lamp, sneaker, watch, laptop, chair, etc.), brand, model, release/manufacturing year, and original retail price if known. " +
+                "Do not default to 'unknown' or 'Unknown item' if there is any visible object; name the object specifically and describe it. " +
                 "Return ONLY strict JSON with the following schema: " +
                 "{" +
                 "\"category\":string," +
@@ -252,6 +253,15 @@ public sealed class TieredVisionClient : IVisionClient
     private static JsonElement? ParseJsonObject(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
+
+        // Clean/Repair: Extract the JSON object substring to handle markdown backticks, preamble/postamble, etc.
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start >= 0 && end > start)
+        {
+            text = text.Substring(start, end - start + 1);
+        }
+
         try
         {
             using var doc = JsonDocument.Parse(text);
