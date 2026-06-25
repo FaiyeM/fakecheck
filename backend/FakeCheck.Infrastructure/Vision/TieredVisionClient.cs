@@ -110,7 +110,7 @@ public sealed class TieredVisionClient : IVisionClient
             }
 
             return new IdentificationResult(
-                Category: GetString(json.Value, "category", "unknown"),
+                Category: NormalizeCategory(GetString(json.Value, "category", "unknown")),
                 Brand: GetString(json.Value, "brand", "Unknown"),
                 ProductLine: GetNullableString(json.Value, "product_line"),
                 DisplayName: GetString(json.Value, "display_name", "Unknown item"),
@@ -305,6 +305,58 @@ public sealed class TieredVisionClient : IVisionClient
 
     private static string? GetNullableString(JsonElement e, string name)
         => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
+    private static string NormalizeCategory(string rawCategory)
+    {
+        if (string.IsNullOrWhiteSpace(rawCategory)) return "unknown";
+
+        var normalized = rawCategory.Trim().ToLowerInvariant();
+
+        // 1) Sneakers synonyms
+        if (normalized.Contains("sneaker") ||
+            normalized.Contains("runner") ||
+            normalized.Contains("jogger") ||
+            normalized.Contains("trainer") ||
+            normalized.Contains("footwear") ||
+            normalized.Contains("shoe") ||
+            normalized.Contains("athletic shoe") ||
+            normalized.Contains("sport shoe"))
+        {
+            return "sneaker";
+        }
+
+        // 2) Handbags synonyms
+        if (normalized.Contains("handbag") ||
+            normalized.Contains("bag") ||
+            normalized.Contains("purse") ||
+            normalized.Contains("pocketbook") ||
+            normalized.Contains("tote") ||
+            normalized.Contains("clutch"))
+        {
+            return "handbag";
+        }
+
+        // 3) Pokemon synonyms
+        if (normalized.Contains("pokemon") ||
+            normalized.Contains("pokémon") ||
+            normalized.Contains("trading card") ||
+            normalized.Contains("collectible card") ||
+            normalized.Contains("card"))
+        {
+            return "pokemon";
+        }
+
+        // 4) Watch synonyms
+        if (normalized.Contains("watch") ||
+            normalized.Contains("timepiece") ||
+            normalized.Contains("wristwatch") ||
+            normalized.Contains("wrist watch"))
+        {
+            return "watch";
+        }
+
+        return normalized;
+    }
 
     private static int GetInt(JsonElement e, string name)
     {

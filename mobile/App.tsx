@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -9,6 +9,7 @@ import { useCorrectionSync } from "./src/api/correctionSync";
 import { analytics, initAnalytics } from "./src/analytics";
 import { getDeviceId } from "./src/api/deviceId";
 import { palette } from "./src/theme";
+import { SplashScreen } from "./src/components/SplashScreen";
 
 const navTheme = {
   ...DarkTheme,
@@ -22,6 +23,8 @@ const navTheme = {
 };
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   // Drain any offline-queued corrections on launch + reconnect (spec §12.5).
   useCorrectionSync();
 
@@ -33,6 +36,10 @@ export default function App() {
       analytics.appOpened();
     })();
   }, []);
+
+  if (showSplash) {
+    return <SplashScreen onAnimationEnd={() => setShowSplash(false)} />;
+  }
 
   return (
     <SafeAreaProvider>
