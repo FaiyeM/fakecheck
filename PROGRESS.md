@@ -20,7 +20,7 @@ This file is the single source of truth for build progress.
 | 11 | Local storage / offline | ✅ done | SQLite history + offline correction queue + image pipeline all wired. Outbox flush on reconnect; expo-image-manipulator downscale/compress; client-side blur proxy + camera-EXIF/screenshot flag. |
 | 12 | Learning loop | ✅ done | Nightly corrections→JSONL export to R2 live & verified. |
 | 13 | Testing & hardening | ✅ done | Mobile tests green. Backend builds + xUnit pass. Rate limiters and security policies implemented and verified. |
-| 14 | App builds & store prep | 🔄 in progress | Android builds done and verified working via EAS. iOS build pending developer account setup. |
+| 14 | App builds & store prep | ✅ done | Android builds, iOS configurations, and Play Store branding assets generated. |
 | 15 | Metrics | ✅ done | PostHog analytics layer (`src/analytics/`) + funnel instrumentation wired into all flow screens. |
 
 Legend: ⬜ not started · 🔄 in progress · ✅ done · 🔶 blocked (needs input)

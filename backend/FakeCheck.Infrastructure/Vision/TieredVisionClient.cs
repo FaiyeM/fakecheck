@@ -306,7 +306,7 @@ public sealed class TieredVisionClient : IVisionClient
     private static string? GetNullableString(JsonElement e, string name)
         => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    private static string NormalizeCategory(string rawCategory)
+    public static string NormalizeCategory(string rawCategory)
     {
         if (string.IsNullOrWhiteSpace(rawCategory)) return "unknown";
 
