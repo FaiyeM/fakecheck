@@ -20,13 +20,22 @@ async function putFileToPresignedUrl(url: string, fileUri: string): Promise<void
   }
 }
 
+// TEMP diagnostic: label which step throws so on-device errors are pinpointable.
+async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    throw new Error(`${name}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 // Presign + PUT a single local image to R2, returning its object key.
 // Images are downscaled/compressed by the camera-quality setting first (Phase 11).
 export async function uploadImageAsync(localUri: string): Promise<string> {
-  const { uploads } = await presignUploads(1);
+  const { uploads } = await stage("presign", () => presignUploads(1));
   const target = uploads[0];
-  const prepared = await prepareImageForUpload(localUri);
-  await putFileToPresignedUrl(target.url, prepared.uri);
+  const prepared = await stage("prepare", () => prepareImageForUpload(localUri));
+  await stage("put", () => putFileToPresignedUrl(target.url, prepared.uri));
   return target.key;
 }
 
