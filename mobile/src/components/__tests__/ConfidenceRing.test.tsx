@@ -12,9 +12,9 @@ describe("ConfidenceRing", () => {
   });
 
   it("shows the High/Medium/Low text bucket alongside color", () => {
-    expect(render(<ConfidenceRing score={90} />).getByText("High confidence")).toBeTruthy();
-    expect(render(<ConfidenceRing score={60} />).getByText("Medium confidence")).toBeTruthy();
-    expect(render(<ConfidenceRing score={20} />).getByText("Low confidence")).toBeTruthy();
+    expect(render(<ConfidenceRing score={90} />).getByText("HIGH CONFIDENCE")).toBeTruthy();
+    expect(render(<ConfidenceRing score={60} />).getByText("MEDIUM CONFIDENCE")).toBeTruthy();
+    expect(render(<ConfidenceRing score={20} />).getByText("LOW CONFIDENCE")).toBeTruthy();
   });
 
   it("exposes an accessibility label combining percent and bucket", () => {
@@ -24,6 +24,6 @@ describe("ConfidenceRing", () => {
 
   it("honors a custom label override", () => {
     const { getByText } = render(<ConfidenceRing score={90} label="Identified" />);
-    expect(getByText("Identified")).toBeTruthy();
+    expect(getByText("IDENTIFIED")).toBeTruthy();
   });
 });

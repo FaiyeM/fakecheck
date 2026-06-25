@@ -21,7 +21,7 @@ import { uploadImagesAsync } from "../api/upload";
 import { useScanStore } from "../store/scanStore";
 import { analytics } from "../analytics";
 import { markDisputedAndQueue } from "../db";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 import type { CorrectionRequest } from "../api/types";
 import type { RootStackParamList } from "../navigation/types";
 
@@ -99,7 +99,7 @@ export function CorrectionScreen() {
         // Stays queued; Phase 11 flush retries on reconnect.
       }
 
-      Alert.alert("Thanks", "Your correction was submitted. We use it to improve FakeCheck.", [
+      Alert.alert("Thanks", "Your correction was submitted. We use it to improve Snap Check.", [
         { text: "OK", onPress: () => navigation.navigate("Home") },
       ]);
     } finally {
@@ -110,13 +110,13 @@ export function CorrectionScreen() {
   const remaining = MAX - reason.length;
 
   return (
-    <Screen title="Tell us what we got wrong">
+    <Screen title="DISPUTE RESULT">
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.original}>
-          Original result: {verdict?.verdict ?? "—"} ({Math.round(verdict?.overallConfidence ?? 0)}%)
+          ORIGINAL RESULT: {String(verdict?.verdict).toUpperCase()} ({Math.round(verdict?.overallConfidence ?? 0)}%)
         </Text>
 
-        <Text style={styles.label}>What&apos;s the correct verdict?</Text>
+        <Text style={styles.label}>CORRECT VERDICT:</Text>
         <View style={styles.choices}>
           {CHOICES.map((c) => (
             <Pressable
@@ -131,7 +131,7 @@ export function CorrectionScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>Why? ({MIN}–{MAX} characters)</Text>
+        <Text style={styles.label}>REASON ({MIN}–{MAX} CHARACTERS):</Text>
         <TextInput
           style={styles.input}
           value={reason}
@@ -142,11 +142,11 @@ export function CorrectionScreen() {
         />
         <Text style={styles.counter}>
           {reason.trim().length < MIN
-            ? `${MIN - reason.trim().length} more characters needed`
-            : `${remaining} characters left`}
+            ? `${MIN - reason.trim().length} MORE CHARACTERS NEEDED`
+            : `${remaining} CHARACTERS LEFT`}
         </Text>
 
-        <Text style={styles.label}>Supporting photos (optional, up to 3)</Text>
+        <Text style={styles.label}>SUPPORTING PHOTOS (OPTIONAL, UP TO 3):</Text>
         <View style={styles.photoRow}>
           {supporting.map((uri) => (
             <Image key={uri} source={{ uri }} style={styles.thumb} />
@@ -168,40 +168,43 @@ export function CorrectionScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xl },
   original: { ...typography.caption, color: palette.textMuted, marginBottom: spacing.md },
-  label: { ...typography.body, color: palette.text, marginTop: spacing.md, marginBottom: spacing.sm },
+  label: { ...typography.body, color: palette.text, marginTop: spacing.md, marginBottom: spacing.sm, fontWeight: "700", textTransform: "uppercase" },
   choices: { flexDirection: "row", gap: spacing.sm },
   choice: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.border,
-    borderRadius: radius.md,
+    borderRadius: 0,
     paddingVertical: spacing.md,
     alignItems: "center",
+    backgroundColor: "transparent",
   },
-  choiceActive: { borderColor: palette.primary, backgroundColor: palette.surfaceAlt },
-  choiceText: { ...typography.caption, color: palette.textMuted },
-  choiceTextActive: { color: palette.text, fontWeight: "700" },
+  choiceActive: { borderColor: palette.border, backgroundColor: palette.primary },
+  choiceText: { ...typography.caption, color: palette.text, textTransform: "uppercase" },
+  choiceTextActive: { color: palette.onPrimary, fontWeight: "700" },
   input: {
     minHeight: 110,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.border,
-    borderRadius: radius.md,
+    borderRadius: 0,
     padding: spacing.md,
     color: palette.text,
     textAlignVertical: "top",
+    backgroundColor: palette.surface,
     ...typography.body,
   },
-  counter: { ...typography.caption, color: palette.textMuted, marginTop: spacing.xs },
+  counter: { ...typography.caption, color: palette.textMuted, marginTop: spacing.xs, textTransform: "uppercase" },
   photoRow: { flexDirection: "row", gap: spacing.sm },
-  thumb: { width: 64, height: 64, borderRadius: radius.sm, backgroundColor: palette.surface },
+  thumb: { width: 64, height: 64, borderWidth: 1.5, borderColor: palette.border, borderRadius: 0, backgroundColor: palette.surface },
   addPhoto: {
     width: 64,
     height: 64,
-    borderRadius: radius.sm,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 1.5,
     borderColor: palette.border,
+    backgroundColor: palette.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  addPhotoText: { fontSize: 28, color: palette.textMuted },
+  addPhotoText: { fontSize: 24, color: palette.text, fontWeight: "700" },
 });

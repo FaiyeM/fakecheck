@@ -43,7 +43,7 @@ public sealed class TieredVisionClient : IVisionClient
     public async Task<IdentificationResult> IdentifyAsync(string imageKey, CancellationToken ct = default)
     {
         var unknown = new IdentificationResult("unknown", "Unknown", null, "Unknown item", 0,
-            Array.Empty<IdentificationAlternative>());
+            Array.Empty<IdentificationAlternative>(), null, null, null);
 
         if (!_opts.Gemini.IsConfigured)
         {
@@ -55,9 +55,20 @@ public sealed class TieredVisionClient : IVisionClient
         {
             var b64 = await LoadBase64Async(imageKey, ct);
             var prompt =
-                "Identify this collectible item. Return ONLY strict JSON: " +
-                "{\"category\":\"sneaker|handbag|pokemon|watch|unknown\",\"brand\":string,\"product_line\":string," +
-                "\"display_name\":string,\"confidence\":0-100,\"alternatives\":[{\"product_line\":string,\"display_name\":string,\"confidence\":0-100}]}";
+                "Identify this item. It can be any category of object, collectible, or everyday item. " +
+                "Determine the category, brand, model, release/manufacturing year, and original retail price if known. " +
+                "Return ONLY strict JSON with the following schema: " +
+                "{" +
+                "\"category\":string," +
+                "\"brand\":string," +
+                "\"model\":string," +
+                "\"year\":string_or_null," +
+                "\"retail_price\":string_or_null," +
+                "\"product_line\":string_or_null," +
+                "\"display_name\":string," +
+                "\"confidence\":0-100," +
+                "\"alternatives\":[{\"product_line\":string,\"display_name\":string,\"confidence\":0-100}]" +
+                "}";
 
             var body = new
             {
@@ -93,17 +104,20 @@ public sealed class TieredVisionClient : IVisionClient
                 foreach (var a in altArr.EnumerateArray())
                 {
                     alts.Add(new IdentificationAlternative(
-                        GetString(a, "product_line"), GetString(a, "display_name"), GetInt(a, "confidence")));
+                         GetString(a, "product_line"), GetString(a, "display_name"), GetInt(a, "confidence")));
                 }
             }
 
             return new IdentificationResult(
                 Category: GetString(json.Value, "category", "unknown"),
                 Brand: GetString(json.Value, "brand", "Unknown"),
-                ProductLine: GetString(json.Value, "product_line"),
+                ProductLine: GetNullableString(json.Value, "product_line"),
                 DisplayName: GetString(json.Value, "display_name", "Unknown item"),
                 Confidence: GetInt(json.Value, "confidence"),
-                Alternatives: alts);
+                Alternatives: alts,
+                Model: GetNullableString(json.Value, "model"),
+                Year: GetNullableString(json.Value, "year"),
+                RetailPrice: GetNullableString(json.Value, "retail_price"));
         }
         catch (Exception ex)
         {
@@ -278,6 +292,9 @@ public sealed class TieredVisionClient : IVisionClient
 
     private static string GetString(JsonElement e, string name, string fallback = "")
         => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? fallback : fallback;
+
+    private static string? GetNullableString(JsonElement e, string name)
+        => e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
     private static int GetInt(JsonElement e, string name)
     {

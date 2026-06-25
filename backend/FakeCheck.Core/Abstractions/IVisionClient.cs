@@ -9,7 +9,10 @@ public sealed record IdentificationResult(
     string? ProductLine,
     string DisplayName,
     int Confidence,
-    IReadOnlyList<IdentificationAlternative> Alternatives);
+    IReadOnlyList<IdentificationAlternative> Alternatives,
+    string? Model,
+    string? Year,
+    string? RetailPrice);
 
 public sealed record IdentificationAlternative(string ProductLine, string DisplayName, int Confidence);
 

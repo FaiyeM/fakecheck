@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { assessCapture } from "../api/imagePipeline";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 import { PrimaryButton } from "./PrimaryButton";
 
 interface Props {
@@ -31,7 +31,7 @@ export function CameraCapture({ onCapture, overlay, busy }: Props) {
     return (
       <View style={[styles.fill, styles.centered]}>
         <Text style={styles.permtext}>
-          FakeCheck needs camera access to scan your item.
+          Snap Check needs camera access to scan your item.
         </Text>
         <PrimaryButton title="Grant camera access" onPress={requestPermission} />
       </View>
@@ -146,9 +146,9 @@ const styles = StyleSheet.create({
   frame: {
     flex: 1,
     margin: spacing.xl,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.7)",
-    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+    borderRadius: 0,
   },
   controls: {
     flexDirection: "row",
@@ -159,21 +159,24 @@ const styles = StyleSheet.create({
   },
   sideBtn: { width: 72, alignItems: "center" },
   iconBtn: {
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: "#FFFFFF",
+    borderRadius: 0,
   },
-  iconText: { ...typography.caption, color: "#fff", fontWeight: "600" },
+  iconText: { ...typography.caption, color: "#fff", fontWeight: "700", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: 1 },
   shutter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
+    width: 70,
+    height: 70,
+    borderRadius: 0,
+    borderWidth: 1.5,
     borderColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "transparent",
   },
   shutterBusy: { opacity: 0.5 },
-  shutterInner: { width: 58, height: 58, borderRadius: 29, backgroundColor: "#fff" },
+  shutterInner: { width: 54, height: 54, borderRadius: 0, backgroundColor: "#fff" },
 });

@@ -31,6 +31,9 @@ export interface IdentificationResult {
   displayName: string;
   confidence: number;
   alternatives: IdentificationAlternative[];
+  model?: string | null;
+  year?: string | null;
+  retailPrice?: string | null;
 }
 
 // ---- /scans ----

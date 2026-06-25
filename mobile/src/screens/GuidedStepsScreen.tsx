@@ -15,7 +15,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { useScanStore } from "../store/scanStore";
 import { uploadImageAsync } from "../api/upload";
 import { analytics } from "../analytics";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 import type { RootStackParamList } from "../navigation/types";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "GuidedSteps">;
@@ -82,7 +82,7 @@ export function GuidedStepsScreen() {
 
   if (!step) {
     return (
-      <Screen title="Photos">
+      <Screen title="PHOTOS">
         <Text style={styles.muted}>No photo steps loaded. Go back and try again.</Text>
         <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
       </Screen>
@@ -102,12 +102,12 @@ export function GuidedStepsScreen() {
               <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
             </View>
             <Text style={styles.counter}>
-              Step {index + 1} of {ordered.length}
-              {step.requirement !== "required" ? `  ·  ${step.requirement}` : ""}
+              STEP {index + 1} OF {ordered.length}
+              {step.requirement !== "required" ? `  ·  ${step.requirement.toUpperCase()}` : ""}
             </Text>
 
             <View style={styles.card}>
-              <Text style={styles.title}>{step.instructionTitle}</Text>
+              <Text style={styles.title}>{step.instructionTitle.toUpperCase()}</Text>
               {step.referenceImageUrl ? (
                 <Image
                   source={{ uri: step.referenceImageUrl }}
@@ -115,7 +115,7 @@ export function GuidedStepsScreen() {
                   resizeMode="cover"
                 />
               ) : null}
-              {step.tipText ? <Text style={styles.tip}>{step.tipText}</Text> : null}
+              {step.tipText ? <Text style={styles.tip}>{step.tipText.toUpperCase()}</Text> : null}
             </View>
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -141,30 +141,34 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
   overlay: { flex: 1, padding: spacing.md },
   progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    height: 4,
+    borderRadius: 0,
+    backgroundColor: "rgba(255,255,255,0.2)",
     overflow: "hidden",
   },
-  progressFill: { height: 6, backgroundColor: palette.primary },
-  counter: { ...typography.caption, color: "#fff", marginTop: spacing.sm, fontWeight: "600" },
+  progressFill: { height: 4, backgroundColor: "#FFFFFF" },
+  counter: { ...typography.caption, color: "#fff", marginTop: spacing.sm, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
   card: {
     marginTop: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: radius.md,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    borderWidth: 1,
+    borderColor: "#FFFFFF",
+    borderRadius: 0,
     padding: spacing.md,
   },
-  title: { ...typography.heading, color: "#fff" },
+  title: { ...typography.heading, color: "#fff", fontWeight: "700" },
   reference: {
     width: "100%",
     height: 120,
-    borderRadius: radius.sm,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: "#FFFFFF",
     marginTop: spacing.sm,
     backgroundColor: palette.surface,
   },
-  tip: { ...typography.caption, color: "#D7DEE8", marginTop: spacing.sm },
-  error: { ...typography.caption, color: "#FF8A8A", marginTop: spacing.sm },
+  tip: { ...typography.caption, color: "#B0B0B0", marginTop: spacing.sm, letterSpacing: 0.5 },
+  error: { ...typography.caption, color: "#fff", marginTop: spacing.sm, textTransform: "uppercase" },
   skip: { alignSelf: "center", marginTop: spacing.sm, padding: spacing.sm },
-  skipText: { ...typography.body, color: "#fff", textDecorationLine: "underline" },
+  skipText: { ...typography.body, color: "#fff", textDecorationLine: "underline", textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5 },
   muted: { ...typography.body, color: palette.textMuted },
 });

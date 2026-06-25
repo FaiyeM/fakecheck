@@ -4,7 +4,7 @@ import { ExpoConfig, ConfigContext } from "expo/config";
 // EXPO_PUBLIC_API_URL is read at build/start time from .env (see secrets/mobile.env).
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: config.name ?? "FakeCheck",
+  name: config.name ?? "Snap Check",
   slug: config.slug ?? "fakecheck",
   extra: {
     ...config.extra,

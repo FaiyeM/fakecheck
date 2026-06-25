@@ -9,15 +9,15 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 20,
-  pill: 999,
+  sm: 0,
+  md: 0,
+  lg: 0,
+  pill: 0,
 };
 
 export const typography = {
-  title: { fontSize: 24, fontWeight: "700" as const },
-  heading: { fontSize: 18, fontWeight: "600" as const },
-  body: { fontSize: 15, fontWeight: "400" as const },
-  caption: { fontSize: 13, fontWeight: "400" as const },
+  title: { fontSize: 22, fontWeight: "700" as const, fontFamily: "monospace", letterSpacing: 1 },
+  heading: { fontSize: 16, fontWeight: "700" as const, fontFamily: "monospace", letterSpacing: 0.5 },
+  body: { fontSize: 14, fontWeight: "400" as const, fontFamily: "monospace" },
+  caption: { fontSize: 12, fontWeight: "400" as const, fontFamily: "monospace" },
 };

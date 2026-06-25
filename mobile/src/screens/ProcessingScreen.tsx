@@ -22,10 +22,10 @@ import type { RootStackParamList } from "../navigation/types";
 type Nav = NativeStackNavigationProp<RootStackParamList, "Processing">;
 
 const TIPS = [
-  "Comparing against verified reference details…",
-  "Checking stitching, alignment and finish…",
-  "Reading logos, fonts and serial markings…",
-  "Cross-referencing material and texture…",
+  "COMPARING AGAINST VERIFIED REFERENCE DETAILS…",
+  "CHECKING STITCHING, ALIGNMENT AND FINISH…",
+  "READING LOGOS, FONTS AND SERIAL MARKINGS…",
+  "CROSS-REFERENCING MATERIAL AND TEXTURE…",
 ];
 
 // Scanning animation + rotating tips while POST /auth/analyze runs (spec §4.5).
@@ -45,13 +45,16 @@ export function ProcessingScreen() {
 
   const pulse = useSharedValue(0);
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + pulse.value * 0.18 }],
+    transform: [
+      { scale: 1 + pulse.value * 0.15 },
+      { rotate: `${pulse.value * 45}deg` },
+    ],
     opacity: 1 - pulse.value * 0.4,
   }));
 
   useEffect(() => {
     pulse.value = withRepeat(
-      withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
@@ -104,10 +107,10 @@ export function ProcessingScreen() {
   const itemName = identification?.displayName ?? categoryLabel(categoryId ?? "");
 
   return (
-    <Screen>
+    <Screen title="ANALYZING">
       <View style={styles.center}>
         <Animated.View style={[styles.ring, animStyle]} />
-        <Text style={styles.title}>Analyzing {itemName}…</Text>
+        <Text style={styles.title}>ANALYZING {itemName.toUpperCase()}…</Text>
 
         {error ? (
           <>
@@ -135,12 +138,12 @@ export function ProcessingScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.lg },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.xl },
   ring: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 0,
+    borderWidth: 4,
     borderColor: palette.primary,
   },
   title: { ...typography.heading, color: palette.text, textAlign: "center" },
@@ -150,6 +153,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     minHeight: 44,
     paddingHorizontal: spacing.md,
+    textTransform: "uppercase",
   },
-  error: { ...typography.body, color: "#D64545", textAlign: "center" },
+  error: { ...typography.body, color: palette.text, textAlign: "center", textTransform: "uppercase" },
 });

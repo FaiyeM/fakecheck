@@ -36,7 +36,7 @@ export function AuthIntroScreen() {
   const count = steps?.length ?? 0;
 
   return (
-    <Screen title="Check authenticity">
+    <Screen title="VERIFICATION">
       <Text style={styles.item}>{itemName}</Text>
 
       {isPending ? (
@@ -51,9 +51,9 @@ export function AuthIntroScreen() {
       ) : (
         <>
           <Text style={styles.lead}>
-            {count} more photo{count === 1 ? "" : "s"}, about 60–90 seconds.
+            {count} MORE PHOTO{count === 1 ? "" : "S"} — APPROX. 60–90 SECONDS.
           </Text>
-          <Text style={styles.subhead}>We&apos;ll guide you through each one:</Text>
+          <Text style={styles.subhead}>GUIDED STEPS REQUIRED:</Text>
 
           <FlatList
             data={steps}
@@ -65,7 +65,7 @@ export function AuthIntroScreen() {
                   <Text style={styles.bulletText}>{index + 1}</Text>
                 </View>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>{item.instructionTitle}</Text>
+                  <Text style={styles.rowTitle}>{item.instructionTitle.toUpperCase()}</Text>
                   {item.requirement !== "required" && (
                     <Text style={styles.optional}>{item.requirement}</Text>
                   )}
@@ -91,24 +91,26 @@ export function AuthIntroScreen() {
 }
 
 const styles = StyleSheet.create({
-  item: { ...typography.heading, color: palette.text, marginBottom: spacing.sm },
-  lead: { ...typography.body, color: palette.text, marginBottom: spacing.xs },
+  item: { ...typography.heading, color: palette.text, marginBottom: spacing.sm, textTransform: "uppercase" },
+  lead: { ...typography.body, color: palette.text, marginBottom: spacing.xs, fontWeight: "700" },
   subhead: { ...typography.caption, color: palette.textMuted, marginBottom: spacing.sm },
-  list: { flexGrow: 0, marginBottom: spacing.md },
+  list: { flexGrow: 0, marginBottom: spacing.md, borderTopWidth: 1, borderTopColor: palette.border },
   centered: { alignItems: "center", marginTop: spacing.lg, gap: spacing.sm },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: spacing.sm },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: palette.border },
   bullet: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: palette.surfaceAlt,
+    borderRadius: 0,
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    backgroundColor: palette.surface,
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.md,
   },
   bulletText: { ...typography.caption, color: palette.text, fontWeight: "700" },
   rowBody: { flex: 1 },
-  rowTitle: { ...typography.body, color: palette.text },
-  optional: { ...typography.caption, color: palette.textMuted, textTransform: "capitalize" },
-  error: { ...typography.body, color: "#D64545", textAlign: "center" },
+  rowTitle: { ...typography.body, color: palette.text, fontWeight: "700" },
+  optional: { ...typography.caption, color: palette.textMuted, textTransform: "uppercase", fontSize: 10 },
+  error: { ...typography.body, color: palette.text, textAlign: "center", textTransform: "uppercase" },
 });

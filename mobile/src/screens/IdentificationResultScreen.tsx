@@ -19,7 +19,7 @@ import { uploadImageAsync } from "../api/upload";
 import { getDeviceId } from "../api/deviceId";
 import { analytics } from "../analytics";
 import { CATEGORIES, categoryLabel } from "../constants/categories";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 import type { RootStackParamList } from "../navigation/types";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "IdentificationResult">;
@@ -93,7 +93,7 @@ export function IdentificationResultScreen() {
 
   if (!primaryPhotoUri) {
     return (
-      <Screen title="Identification">
+      <Screen title="IDENTIFY">
         <Text style={styles.muted}>No photo captured. Go back and scan an item.</Text>
         <PrimaryButton title="Back to camera" onPress={() => navigation.navigate("Home")} />
       </Screen>
@@ -102,9 +102,10 @@ export function IdentificationResultScreen() {
 
   const loading = identify.isPending || (!identification && !error);
   const conf = identification?.confidence ?? 0;
+  const isSupported = categoryId === "sneaker" || categoryId === "handbag" || categoryId === "pokemon" || categoryId === "watch";
 
   return (
-    <Screen>
+    <Screen title="RESULT">
       <ScrollView contentContainerStyle={styles.content}>
         <Image source={{ uri: primaryPhotoUri }} style={styles.photo} />
 
@@ -125,6 +126,31 @@ export function IdentificationResultScreen() {
               <Text style={styles.tagText}>{categoryLabel(categoryId ?? "")}</Text>
             </View>
 
+            <View style={styles.metaCard}>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>BRAND</Text>
+                <Text style={styles.metaValue}>{(identification?.brand ?? "UNKNOWN").toUpperCase()}</Text>
+              </View>
+              {identification?.model ? (
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>MODEL</Text>
+                  <Text style={styles.metaValue}>{identification.model.toUpperCase()}</Text>
+                </View>
+              ) : null}
+              {identification?.year ? (
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>RELEASE YEAR</Text>
+                  <Text style={styles.metaValue}>{identification.year.toUpperCase()}</Text>
+                </View>
+              ) : null}
+              {identification?.retailPrice ? (
+                <View style={[styles.metaRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.metaLabel}>RETAIL PRICE</Text>
+                  <Text style={styles.metaValue}>{identification.retailPrice.toUpperCase()}</Text>
+                </View>
+              ) : null}
+            </View>
+
             <View style={styles.ringWrap}>
               <ConfidenceRing score={conf} />
             </View>
@@ -132,6 +158,12 @@ export function IdentificationResultScreen() {
             {conf < 40 && (
               <Text style={styles.warn}>
                 Low confidence — a clearer, well-lit photo will improve results.
+              </Text>
+            )}
+
+            {!isSupported && (
+              <Text style={styles.notSupported}>
+                SNAP CHECK IS NOT SUPPORTED FOR THIS CATEGORY. CHOOSE AN OVERRIDE CATEGORY BELOW TO ENABLE AUTHENTICITY SCAN.
               </Text>
             )}
 
@@ -150,7 +182,7 @@ export function IdentificationResultScreen() {
                     }}
                     style={[styles.chip, categoryId === c.id && styles.chipActive]}
                   >
-                    <Text style={styles.chipText}>
+                    <Text style={[styles.chipText, categoryId === c.id && styles.chipTextActive]}>
                       {c.emoji} {c.label}
                     </Text>
                   </Pressable>
@@ -159,10 +191,10 @@ export function IdentificationResultScreen() {
             )}
 
             <PrimaryButton
-              title="Check if Fake"
+              title="START SNAP CHECK"
               onPress={startAuth}
               loading={starting}
-              disabled={!categoryId}
+              disabled={!categoryId || !isSupported}
             />
             <PrimaryButton
               title="Scan again"
@@ -178,31 +210,79 @@ export function IdentificationResultScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xl },
-  photo: { width: "100%", height: 240, borderRadius: radius.md, backgroundColor: palette.surface },
+  photo: { width: "100%", height: 240, borderWidth: 1.5, borderColor: palette.border, borderRadius: 0, backgroundColor: palette.surface },
   centered: { alignItems: "center", marginTop: spacing.lg, gap: spacing.sm },
   name: { ...typography.title, color: palette.text, marginTop: spacing.md, textAlign: "center" },
   tag: {
     alignSelf: "center",
-    backgroundColor: palette.surfaceAlt,
-    borderRadius: radius.pill,
+    backgroundColor: palette.surface,
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    borderRadius: 0,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     marginTop: spacing.sm,
   },
-  tagText: { ...typography.caption, color: palette.textMuted },
+  tagText: { ...typography.caption, color: palette.text, textTransform: "uppercase" },
+  metaCard: {
+    backgroundColor: palette.surface,
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    borderRadius: 0,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+    width: "100%",
+  },
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(17,17,17,0.15)",
+  },
+  metaLabel: {
+    fontFamily: "monospace",
+    fontSize: 11,
+    fontWeight: "700",
+    color: palette.textMuted,
+  },
+  metaValue: {
+    fontFamily: "monospace",
+    fontSize: 11,
+    fontWeight: "700",
+    color: palette.text,
+    textAlign: "right",
+    flex: 1,
+    paddingLeft: spacing.md,
+  },
   ringWrap: { alignItems: "center", marginVertical: spacing.lg },
-  warn: { ...typography.caption, color: "#E0A416", textAlign: "center", marginBottom: spacing.sm },
-  link: { ...typography.body, color: palette.primary, textAlign: "center", marginVertical: spacing.sm },
+  warn: { ...typography.caption, color: palette.textMuted, textAlign: "center", marginBottom: spacing.sm, textTransform: "uppercase" },
+  notSupported: {
+    ...typography.caption,
+    color: palette.text,
+    textAlign: "center",
+    marginVertical: spacing.sm,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    padding: spacing.sm,
+    lineHeight: 16,
+  },
+  link: { ...typography.body, color: palette.text, textDecorationLine: "underline", textAlign: "center", marginVertical: spacing.sm, textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5 },
   pickerRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, justifyContent: "center" },
   chip: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.border,
-    borderRadius: radius.pill,
+    borderRadius: 0,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    backgroundColor: "transparent",
   },
-  chipActive: { borderColor: palette.primary, backgroundColor: palette.surfaceAlt },
-  chipText: { ...typography.caption, color: palette.text },
-  muted: { ...typography.body, color: palette.textMuted, textAlign: "center" },
-  error: { ...typography.body, color: "#D64545", textAlign: "center" },
+  chipActive: { borderColor: palette.border, backgroundColor: palette.primary },
+  chipText: { ...typography.caption, color: palette.text, textTransform: "uppercase", letterSpacing: 0.5 },
+  chipTextActive: { color: palette.onPrimary },
+  muted: { ...typography.body, color: palette.textMuted, textAlign: "center", textTransform: "uppercase" },
+  error: { ...typography.body, color: palette.text, textAlign: "center", textTransform: "uppercase" },
 });

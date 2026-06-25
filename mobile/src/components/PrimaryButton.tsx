@@ -6,7 +6,7 @@ import {
   Text,
   ViewStyle,
 } from "react-native";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing } from "../theme";
 
 interface Props {
   title: string;
@@ -43,7 +43,7 @@ export function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isSecondary ? palette.text : palette.onPrimary} />
+        <ActivityIndicator color={palette.text} />
       ) : (
         <Text style={[styles.label, isSecondary && styles.secondaryLabel]}>{title}</Text>
       )}
@@ -53,17 +53,33 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
-    borderRadius: radius.md,
+    minHeight: 50,
+    borderRadius: 0,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.lg,
     marginTop: spacing.sm,
+    backgroundColor: "transparent",
   },
-  primary: { backgroundColor: palette.primary },
-  secondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: palette.border },
-  disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.85 },
-  label: { ...typography.heading, color: palette.onPrimary },
-  secondaryLabel: { color: palette.text },
+  primary: {
+    borderColor: palette.border,
+  },
+  secondary: {
+    borderColor: palette.border,
+    opacity: 0.6,
+  },
+  disabled: { opacity: 0.35 },
+  pressed: { backgroundColor: "rgba(17,17,17,0.08)" },
+  label: {
+    fontFamily: "monospace",
+    fontSize: 14,
+    fontWeight: "700",
+    color: palette.text,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  secondaryLabel: {
+    color: palette.text,
+  },
 });

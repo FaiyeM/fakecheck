@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Screen } from "../components/Screen";
 import { deleteScan, listScans, type ScanRow } from "../db";
 import { categoryLabel } from "../constants/categories";
-import { palette, radius, spacing, typography, verdictColor, type VerdictKey } from "../theme";
+import { palette, spacing, typography, verdictColor, type VerdictKey } from "../theme";
 import type { RootStackParamList } from "../navigation/types";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "History">;
@@ -81,12 +81,12 @@ export function HistoryScreen() {
   };
 
   return (
-    <Screen title="History">
+    <Screen title="HISTORY">
       <TextInput
         style={styles.search}
         value={query}
         onChangeText={setQuery}
-        placeholder="Search by item or category"
+        placeholder="SEARCH BY ITEM OR CATEGORY"
         placeholderTextColor={palette.textMuted}
       />
 
@@ -97,7 +97,7 @@ export function HistoryScreen() {
             onPress={() => setFilter(f)}
             style={[styles.filter, filter === f && styles.filterActive]}
           >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
+            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f.toUpperCase()}</Text>
           </Pressable>
         ))}
       </View>
@@ -105,6 +105,7 @@ export function HistoryScreen() {
       <FlatList
         data={visible}
         keyExtractor={(r) => r.id}
+        style={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>No scans yet. Scan an item to start.</Text>}
         renderItem={({ item }) => {
           const color = verdictColor[keyOf(item.verdict)];
@@ -121,15 +122,15 @@ export function HistoryScreen() {
               )}
               <View style={styles.rowBody}>
                 <Text style={styles.name} numberOfLines={1}>
-                  {item.display_name ?? categoryLabel(item.category)}
+                  {(item.display_name ?? categoryLabel(item.category)).toUpperCase()}
                 </Text>
                 <Text style={styles.meta}>
-                  {categoryLabel(item.category)} · {new Date(item.created_at).toLocaleDateString()}
+                  {categoryLabel(item.category).toUpperCase()} · {new Date(item.created_at).toLocaleDateString()}
                 </Text>
               </View>
               <View style={styles.badges}>
-                {item.disputed === 1 && <Text style={styles.disputed}>Disputed</Text>}
-                <Text style={[styles.verdict, { color }]}>{item.verdict ?? "—"}</Text>
+                {item.disputed === 1 && <Text style={styles.disputedBadge}>DISPUTED</Text>}
+                <Text style={[styles.verdict, { color }]}>{String(item.verdict ?? "—").toUpperCase()}</Text>
               </View>
             </Pressable>
           );
@@ -142,41 +143,48 @@ export function HistoryScreen() {
 
 const styles = StyleSheet.create({
   search: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.border,
-    borderRadius: radius.md,
+    borderRadius: 0,
     padding: spacing.sm,
     color: palette.text,
+    backgroundColor: palette.surface,
     marginBottom: spacing.sm,
     ...typography.body,
   },
   filters: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.sm },
   filter: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.border,
-    borderRadius: radius.pill,
+    borderRadius: 0,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+    backgroundColor: "transparent",
   },
-  filterActive: { borderColor: palette.primary, backgroundColor: palette.surfaceAlt },
-  filterText: { ...typography.caption, color: palette.textMuted },
-  filterTextActive: { color: palette.text, fontWeight: "700" },
+  filterActive: { borderColor: palette.border, backgroundColor: palette.primary },
+  filterText: { ...typography.caption, color: palette.text, textTransform: "uppercase", letterSpacing: 0.5 },
+  filterTextActive: { color: palette.onPrimary, fontWeight: "700" },
+  list: {
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: palette.surface,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
-  thumb: { width: 52, height: 52, borderRadius: radius.sm, marginRight: spacing.md },
+  thumb: { width: 52, height: 52, borderWidth: 1.5, borderColor: palette.border, borderRadius: 0, marginRight: spacing.md },
   thumbEmpty: { backgroundColor: palette.surfaceAlt },
   rowBody: { flex: 1 },
-  name: { ...typography.body, color: palette.text },
+  name: { ...typography.body, color: palette.text, fontWeight: "700" },
   meta: { ...typography.caption, color: palette.textMuted, marginTop: 2 },
   badges: { alignItems: "flex-end" },
-  disputed: { ...typography.caption, color: "#E0A416", marginBottom: 2 },
-  verdict: { ...typography.caption, fontWeight: "700", textTransform: "capitalize" },
-  empty: { ...typography.body, color: palette.textMuted, textAlign: "center", marginTop: spacing.xl },
-  hint: { ...typography.caption, color: palette.textMuted, textAlign: "center", marginTop: spacing.sm },
+  disputedBadge: { ...typography.caption, color: palette.textMuted, marginBottom: 2, textTransform: "uppercase" },
+  verdict: { ...typography.caption, fontWeight: "700" },
+  empty: { ...typography.body, color: palette.textMuted, textAlign: "center", marginTop: spacing.xl, textTransform: "uppercase" },
+  hint: { ...typography.caption, color: palette.textMuted, textAlign: "center", marginTop: spacing.sm, textTransform: "uppercase" },
 });

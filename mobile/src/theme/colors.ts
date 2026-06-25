@@ -1,24 +1,24 @@
 // Color tokens (spec §12: WCAG AA contrast, color always paired with text/icon).
 
 export const palette = {
-  bg: "#0E1116",
-  surface: "#1A1F27",
-  surfaceAlt: "#232A34",
-  text: "#F5F7FA",
-  textMuted: "#A6B0BE",
-  border: "#2E3742",
-  primary: "#2F6FED",
+  bg: "#F5F2EB",       // Warm linen off-white
+  surface: "#FFFFFF",  // Card pure white
+  surfaceAlt: "#FAF8F5",
+  text: "#111111",     // Deep charcoal
+  textMuted: "#706F6C", // Mid gray
+  border: "#111111",   // Thin black strokes
+  primary: "#111111",
   onPrimary: "#FFFFFF",
 };
 
-// Confidence ring buckets (build instructions §11.2: green >=80 / yellow 50-79 / red <50).
+// Monochromatic confidence buckets (high-fashion monochrome styling).
 export function confidenceColor(score: number): string {
-  if (score >= 80) return "#1Fae6c";
-  if (score >= 50) return "#E0A416";
-  return "#D64545";
+  if (score >= 80) return "#111111"; // High: Deep black
+  if (score >= 50) return "#706F6C"; // Medium: Mid gray
+  return "#B0B0B0";                  // Low: Light gray
 }
 
-// Verdict badge colors (spec §7 verdict states).
+// Verdict badge colors (Grayscale/Monochrome states).
 export type VerdictKey =
   | "authentic"
   | "likely_authentic"
@@ -27,9 +27,9 @@ export type VerdictKey =
   | "counterfeit";
 
 export const verdictColor: Record<VerdictKey, string> = {
-  authentic: "#1FAE6C",
-  likely_authentic: "#5FB97E",
-  inconclusive: "#E0A416",
-  likely_counterfeit: "#E07A3F",
-  counterfeit: "#D64545",
+  authentic: "#111111",
+  likely_authentic: "#444444",
+  inconclusive: "#706F6C",
+  likely_counterfeit: "#9E9E9E",
+  counterfeit: "#B0B0B0",
 };

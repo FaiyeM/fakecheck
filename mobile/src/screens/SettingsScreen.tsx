@@ -12,7 +12,7 @@ import Constants from "expo-constants";
 import { Screen } from "../components/Screen";
 import { clearScans } from "../db";
 import { useSettingsStore } from "../store/settingsStore";
-import { palette, radius, spacing, typography } from "../theme";
+import { palette, spacing, typography } from "../theme";
 
 const PRIVACY_URL = "https://fakecheck.app/privacy";
 const TERMS_URL = "https://fakecheck.app/terms";
@@ -45,7 +45,7 @@ export function SettingsScreen() {
   const version = Constants.expoConfig?.version ?? "0.0.0";
 
   return (
-    <Screen title="Settings">
+    <Screen title="SETTINGS">
       <View style={styles.card}>
         <View style={styles.rowBetween}>
           <View style={styles.rowText}>
@@ -65,13 +65,13 @@ export function SettingsScreen() {
         <SettingLink label="Terms of service" onPress={() => Linking.openURL(TERMS_URL)} />
         <SettingLink
           label="Send feedback"
-          onPress={() => Linking.openURL(`mailto:${FEEDBACK_EMAIL}?subject=FakeCheck%20feedback`)}
+          onPress={() => Linking.openURL(`mailto:${FEEDBACK_EMAIL}?subject=SnapCheck%20feedback`)}
         />
         <SettingLink label="Clear scan history" destructive onPress={onClearHistory} />
       </View>
 
       <View style={styles.card}>
-        <View style={styles.disabledRow}>
+        <View style={[styles.disabledRow, { borderTopWidth: 0 }]}>
           <Text style={styles.disabledText}>Create account</Text>
           <Text style={styles.soon}>Coming soon</Text>
         </View>
@@ -81,7 +81,10 @@ export function SettingsScreen() {
         </View>
       </View>
 
-      <Text style={styles.version}>FakeCheck v{version}</Text>
+      <View style={styles.footer}>
+        <Text style={styles.version}>SNAP CHECK v{version}</Text>
+        <Text style={styles.powered}>powered by flossin</Text>
+      </View>
     </Screen>
   );
 }
@@ -97,7 +100,7 @@ function SettingLink({
 }) {
   return (
     <Pressable onPress={onPress} style={styles.linkRow}>
-      <Text style={[styles.linkText, destructive && styles.destructive]}>{label}</Text>
+      <Text style={[styles.linkText, destructive && styles.destructive]}>{label.toUpperCase()}</Text>
       <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
@@ -106,7 +109,9 @@ function SettingLink({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.surface,
-    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    borderRadius: 0,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
@@ -117,27 +122,35 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   rowText: { flex: 1, paddingRight: spacing.md },
-  label: { ...typography.body, color: palette.text },
-  hint: { ...typography.caption, color: palette.textMuted, marginTop: 2 },
+  label: { ...typography.body, color: palette.text, fontWeight: "700", textTransform: "uppercase" },
+  hint: { ...typography.caption, color: palette.textMuted, marginTop: 2, textTransform: "uppercase" },
   linkRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
     borderTopColor: palette.border,
   },
-  linkText: { ...typography.body, color: palette.text },
-  destructive: { color: "#D64545" },
+  linkText: { ...typography.body, color: palette.text, fontWeight: "700" },
+  destructive: { color: palette.textMuted },
   chevron: { ...typography.heading, color: palette.textMuted },
   disabledRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
     opacity: 0.5,
   },
-  disabledText: { ...typography.body, color: palette.text },
-  soon: { ...typography.caption, color: palette.textMuted },
-  version: { ...typography.caption, color: palette.textMuted, textAlign: "center", marginTop: spacing.sm },
+  disabledText: { ...typography.body, color: palette.textMuted, textTransform: "uppercase" },
+  soon: { ...typography.caption, color: palette.textMuted, textTransform: "uppercase" },
+  footer: {
+    marginTop: spacing.xl,
+    alignItems: "center",
+    gap: 2,
+  },
+  version: { ...typography.caption, color: palette.text, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
+  powered: { ...typography.caption, color: palette.textMuted, textTransform: "uppercase", letterSpacing: 0.5, fontSize: 10 },
 });
