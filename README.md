@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Point. Check. Know.</strong><br>
-  Chic, AI-assisted authentication for sneakers, luxury handbags, Pokémon cards, and luxury watches.
+  AI-assisted authentication for sneakers, luxury handbags, Pokémon cards, and luxury watches.
 </p>
 
 ---
