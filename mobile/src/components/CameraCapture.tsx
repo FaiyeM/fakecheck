@@ -24,12 +24,12 @@ export function CameraCapture({ onCapture, overlay, busy }: Props) {
   const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
-    return <View style={styles.fill} />;
+    return <View style={[styles.fill, { backgroundColor: palette.bg }]} />;
   }
 
   if (!permission.granted) {
     return (
-      <View style={[styles.fill, styles.centered]}>
+      <View style={[styles.fill, styles.centered, { backgroundColor: palette.bg }]}>
         <Text style={styles.permtext}>
           Snap Check needs camera access to scan your item.
         </Text>

@@ -103,7 +103,7 @@ reads answers next run and unblocks the item._
   palette.bg }` to the two camera-permission view states (no-permission and not-granted). `palette`
   is already imported, lint passes, all 24 mobile tests pass — so it's a valid, benign cosmetic fix.
   But it wasn't produced by a logged run, so I left it **uncommitted** rather than assume intent.
-  **Commit it (as `fix(mobile): theme bg on camera permission states`) or discard it?** _Answer:_ ⬜
+  **Commit it (as `fix(mobile): theme bg on camera permission states`) or discard it?** _Answer:_ ✅ Faye said commit it (2026-06-28). Committed.
 
 ---
 
@@ -113,7 +113,8 @@ _Newest first. One short entry per run: date · verification result · item atte
 
 | Date | Verify | Item | Outcome | Commit |
 |---|---|---|---|---|
-| 2026-06-28 | ⚠️ partial: mobile lint+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox); git **not clean** at start | none (gate stop) | Working tree had stray uncommitted edit to `CameraCapture.tsx`. Per gate, did **not** start new work. Investigated it (valid cosmetic theme-bg fix, lint+tests green), left it **uncommitted**, queued question [STRAY-2026-06-28] for Faye. Committed the governance docs (tracker/spec/map/recs) which were untracked, plus this log. | (this) |
+| 2026-06-28 | mobile lint+test GREEN (24/24) | STRAY-2026-06-28 | Faye approved the stray `CameraCapture.tsx` theme-bg fix; committed it. | (this) |
+| 2026-06-28 | ⚠️ partial: mobile lint+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox); git **not clean** at start | none (gate stop) | Working tree had stray uncommitted edit to `CameraCapture.tsx`. Per gate, did **not** start new work. Investigated it (valid cosmetic theme-bg fix, lint+tests green), left it **uncommitted**, queued question [STRAY-2026-06-28] for Faye. Committed the governance docs (tracker/spec/map/recs) which were untracked, plus this log. | c7efd1c |
 | 2026-06-28 | n/a (setup) | Tracker created | Roadmap seeded from spec; task scheduled (evening daily) | — |
 
 ---
