@@ -67,10 +67,18 @@ describe("analytics facade", () => {
       checkCount: 6,
     });
     analytics.correctionSubmitted("watch", "counterfeit", "authentic");
+    analytics.identifyCompleted({
+      category: "sneaker",
+      imageCount: 1,
+      confidence: 72,
+      band: null,
+    });
 
     expect(calls[0].event).toBe("verdict_received");
     expect(calls[0].props).toMatchObject({ category: "sneaker", durationMs: 4210 });
     expect(calls[1].event).toBe("correction_submitted");
     expect(calls[1].props).toMatchObject({ direction: "false_positive" });
+    expect(calls[2].event).toBe("identify_completed");
+    expect(calls[2].props).toMatchObject({ category: "sneaker", imageCount: 1, band: null });
   });
 });

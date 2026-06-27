@@ -58,6 +58,12 @@ export function IdentificationResultScreen() {
             result.productLine ?? null,
             result.confidence
           );
+          analytics.identifyCompleted({
+            category: result.category,
+            imageCount: 1, // single-image identify today; §2 multi-image makes this dynamic
+            confidence: result.confidence,
+            band: null, // §2 confidence policy will populate the band
+          });
         }
       } catch (e) {
         // TEMP diagnostic: surface the real failure (upload status/body or identify error)

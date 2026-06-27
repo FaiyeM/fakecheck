@@ -15,6 +15,15 @@ export interface EventProps {
   // Funnel: scan_started -> item_identified -> fake_check_started -> verdict_received.
   scan_started: Record<string, never>;
   item_identified: { category: string; product: string | null; confidence: number };
+  // Usage metering (spec §7): emitted once per successful identify so identifies
+  // -per-subject-per-day can be charted and the free caps (§6) made evidence-based.
+  // `band` is the §2 confidence band ("Best guess"/"Confident"); null until §2 lands.
+  identify_completed: {
+    category: string;
+    imageCount: number;
+    confidence: number;
+    band: string | null;
+  };
   fake_check_started: { category: string; product: string | null };
   auth_steps_viewed: { category: string; stepCount: number };
   auth_step_completed: {

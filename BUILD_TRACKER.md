@@ -53,7 +53,7 @@ plan usage limits). Each run, in order:
 |---|---|---|---|---|---|---|
 | F0 | Real EF migrations baseline | §0 | P0 | ✅ | — | **Done 2026-06-28 (Faye-run, local SDK):** `InitialCreate` migration + design-time factory added; verified live schema == migration (incl. defaults); live DB baselined via `__EFMigrationsHistory` insert (no data touched); `Program.cs` switched `GenerateCreateScript`→`MigrateAsync`. Build clean + 50 xUnit tests pass. Unblocks F9b, F8b, F5, F3b, F9h. Boot confirmed green on Railway (CI + deploy), data intact. |
 | F1 | Fix `fake_bar` product-slug mismatch | §1 / §3.5 | P0 | ⬜ | — | Pure resolver + tests; safe to do in-sandbox. High value, small. |
-| F7 | Usage instrumentation (identify + deep-check events) | §7 | P1 | ⬜ | — | Client analytics only; safe. Do early — data informs §6 caps. |
+| F7 | Usage instrumentation (identify + deep-check events) | §7 | P1 | 🔄 | — | **Code complete + verified 2026-06-28, COMMIT BLOCKED (sandbox).** Added `identify_completed` event ({category,imageCount,confidence,band}) to analytics contract + `analytics.identifyCompleted()` facade; fired in `IdentificationResultScreen` after a successful identify. Deep-checks already covered by existing `verdict_received`. `imageCount=1`/`band=null` until §2 (multi-image + confidence band) lands. Mobile lint+typecheck+24 tests GREEN. **Changes are uncommitted in the working tree** — the sandbox mount blocks `unlink` on `.git/index.lock`, so git can't commit here. Faye must land it (see [SANDBOX-GIT-2026-06-28]). Flip to ✅ once committed. |
 | F9a | Parallelize vision calls in `/auth/analyze` | §9 | P0 | ⬜ | — | `SemaphoreSlim` + `Task.WhenAll`. Add/adjust tests. |
 | F9b | Ownership binding (scan/image ↔ device/user) | §9 / §1.1 | P0 | ⬜ | F0 (scan_photos col) | May need scan_photos persisted first. |
 | F9c | Idempotent analyze (no duplicate checks/verdicts) | §9 / §3.1 | P1 | ⬜ | — | Upsert by (scanId, checkId). |
@@ -99,6 +99,22 @@ reads answers next run and unblocks the item._
   10/day identify + N/month deep-check). _Answer:_ ⬜
 - **[F2r] Redis.** OK to add a Redis service on Railway for the distributed limiter/usage counters?
   _Answer:_ ⬜
+- **[SANDBOX-GIT-2026-06-28] The daily-task sandbox cannot commit.** The Cowork run environment
+  mounts the repo with `unlink` disabled (same restriction that breaks `npm ci` on `node_modules`).
+  Git can stage/read but cannot remove `.git/index.lock`, so **no run can `git commit` from the
+  sandbox.** Today's F7 work is therefore verified-but-uncommitted in the working tree, and a stale
+  `.git/index.lock` was left behind that I can't delete. **Faye, to land F7 and unblock future runs,
+  run locally:**
+  ```bash
+  cd ~/Documents/Claude/Projects/flossin-Fakecheck
+  rm -f .git/index.lock
+  git add -A
+  git commit -m "feat(F7): add identify_completed usage event + analytics facade"
+  git push
+  ```
+  Then in BUILD_TRACKER set F7 ✅. **Open question:** can the daily task's mount be given write/unlink
+  permission on `.git` (and ideally `node_modules`) so runs can commit autonomously? Until then, every
+  run can only verify + edit files and must hand the commit to you. _Answer:_ ⬜
 - **[STRAY-2026-06-28] Uncommitted CameraCapture change.** The working tree had an un-logged,
   uncommitted edit to `mobile/src/components/CameraCapture.tsx`: it adds `{ backgroundColor:
   palette.bg }` to the two camera-permission view states (no-permission and not-granted). `palette`
@@ -114,6 +130,7 @@ _Newest first. One short entry per run: date · verification result · item atte
 
 | Date | Verify | Item | Outcome | Commit |
 |---|---|---|---|---|
+| 2026-06-28 | mobile lint+typecheck+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox) | F7 | Implemented `identify_completed` usage event + `analytics.identifyCompleted()` facade; wired into `IdentificationResultScreen` after a successful identify (extended facade test). All P0 items are backend → unverifiable this run (no SDK), so picked the highest-priority client-only item per the tooling-gap gate rule. **Could NOT commit:** sandbox mount blocks `unlink` on `.git/index.lock` → git cannot write a commit here. Left changes verified-but-uncommitted in the working tree; main HEAD unchanged (6b0b56e). Queued [SANDBOX-GIT-2026-06-28] for Faye to land + to fix the run env. F7 → 🔄. | none (commit blocked) |
 | 2026-06-28 | backend build clean + 50/50 xUnit GREEN (local SDK) | F0 | Adopted EF migrations on existing live DB: InitialCreate + design-time factory; schema verified == migration; live baselined (history insert, no data loss); Program.cs → MigrateAsync. F0 ✅. | 9795058 + (this) |
 | 2026-06-28 | mobile lint+test GREEN (24/24) | STRAY-2026-06-28 | Faye approved the stray `CameraCapture.tsx` theme-bg fix; committed it. | (this) |
 | 2026-06-28 | ⚠️ partial: mobile lint+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox); git **not clean** at start | none (gate stop) | Working tree had stray uncommitted edit to `CameraCapture.tsx`. Per gate, did **not** start new work. Investigated it (valid cosmetic theme-bg fix, lint+tests green), left it **uncommitted**, queued question [STRAY-2026-06-28] for Faye. Committed the governance docs (tracker/spec/map/recs) which were untracked, plus this log. | c7efd1c |

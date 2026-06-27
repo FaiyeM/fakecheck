@@ -29,6 +29,9 @@ export const analytics = {
   itemIdentified: (category: string, product: string | null, confidence: number) =>
     track("item_identified", { category, product, confidence }),
 
+  identifyCompleted: (p: EventProps["identify_completed"]) =>
+    track("identify_completed", p),
+
   fakeCheckStarted: (category: string, product: string | null) =>
     track("fake_check_started", { category, product }),
 
