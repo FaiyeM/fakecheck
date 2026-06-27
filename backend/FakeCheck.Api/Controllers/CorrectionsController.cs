@@ -2,6 +2,7 @@ using System.Text.Json;
 using FakeCheck.Api.Dtos;
 using FakeCheck.Core.Abstractions;
 using FakeCheck.Core.Models;
+using FakeCheck.Core.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FakeCheck.Api.Controllers;
@@ -29,6 +30,18 @@ public sealed class CorrectionsController : ControllerBase
     [ProducesResponseType(typeof(OkResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<OkResponse>> Submit([FromBody] CorrectionRequest req, CancellationToken ct)
     {
+        // Ownership gate (spec §1.1): only the device that created the scan may dispute its verdict.
+        var scan = await _repo.GetScanAsync(req.ScanId, ct);
+        switch (ScanOwnership.Check(Request.Headers["X-Device-Id"].ToString(), scan?.DeviceId))
+        {
+            case OwnershipResult.MissingDeviceId:
+                return Unauthorized("X-Device-Id header is required.");
+            case OwnershipResult.ScanNotFound:
+                return NotFound($"Scan '{req.ScanId}' not found.");
+            case OwnershipResult.OwnerMismatch:
+                return StatusCode(StatusCodes.Status403Forbidden, "Scan belongs to a different device.");
+        }
+
         // Move supporting images to the corrections bucket (EXIF-stripped). Best-effort per image.
         var strippedUrls = new List<string>(req.SupportingImageUrls.Count);
         foreach (var key in req.SupportingImageUrls)

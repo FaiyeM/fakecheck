@@ -3,6 +3,7 @@ using FakeCheck.Core.Abstractions;
 using FakeCheck.Core.Authentication;
 using FakeCheck.Core.Concurrency;
 using FakeCheck.Core.Models;
+using FakeCheck.Core.Security;
 using FakeCheck.Infrastructure;
 using FakeCheck.Infrastructure.Vision;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,18 @@ public sealed class AuthController : ControllerBase
     [ProducesResponseType(typeof(AnalyzeResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<AnalyzeResponse>> Analyze([FromBody] AnalyzeRequest req, CancellationToken ct)
     {
+        // Ownership gate (spec §1.1): a scan may only be analyzed by the device that created it.
+        var scan = await _repo.GetScanAsync(req.ScanId, ct);
+        switch (ScanOwnership.Check(Request.Headers["X-Device-Id"].ToString(), scan?.DeviceId))
+        {
+            case OwnershipResult.MissingDeviceId:
+                return Unauthorized("X-Device-Id header is required.");
+            case OwnershipResult.ScanNotFound:
+                return NotFound($"Scan '{req.ScanId}' not found.");
+            case OwnershipResult.OwnerMismatch:
+                return StatusCode(StatusCodes.Status403Forbidden, "Scan belongs to a different device.");
+        }
+
         var steps = await _repo.GetStepsAsync(req.ItemCategory, ct);
         if (steps.Count == 0) return NotFound($"Unknown category '{req.ItemCategory}'.");
 
