@@ -1,6 +1,7 @@
 using FakeCheck.Api.Dtos;
 using FakeCheck.Core.Abstractions;
 using FakeCheck.Core.Authentication;
+using FakeCheck.Core.Concurrency;
 using FakeCheck.Core.Models;
 using FakeCheck.Infrastructure;
 using FakeCheck.Infrastructure.Vision;
@@ -55,38 +56,44 @@ public sealed class AuthController : ControllerBase
             .Take(_visionOpts.MaxAuthCallsPerScan)
             .ToList();
 
-        var checkInputs = new List<CheckInput>(photos.Count);
-        var persistChecks = new List<Check>(photos.Count);
-        var checkDtos = new List<CheckDto>(photos.Count);
-
-        foreach (var photo in photos)
-        {
-            var step = stepByCheck[photo.CheckId];
-            var prompt = _prompts.GetCheckPrompt(req.ItemCategory, photo.CheckId);
-            var r = await _vision.RunCheckAsync(photo.CheckId, prompt, photo.ImageKey, ct);
-
-            var isCritical = step.Weight >= 3;
-            checkInputs.Add(new CheckInput(
-                CheckId: photo.CheckId,
-                Score: r.Score,
-                Weight: step.Weight,
-                Result: r.Result,
-                IsCritical: isCritical,
-                HardFail: r.HardFail,
-                Observation: r.Observations));
-
-            persistChecks.Add(new Check
+        // Fan out the per-photo premium calls with bounded concurrency (spec §9); results stay
+        // in photo order so the persisted checks and the response DTOs line up deterministically.
+        var perPhoto = await BoundedParallel.MapAsync(
+            photos,
+            _visionOpts.MaxParallelAuthCalls,
+            async (photo, token) =>
             {
-                CheckId = photo.CheckId,
-                Score = r.Score,
-                Result = r.Result.ToString().ToLowerInvariant(),
-                Observation = r.Observations,
-                RawModelJson = r.RawJson
-            });
+                var step = stepByCheck[photo.CheckId];
+                var prompt = _prompts.GetCheckPrompt(req.ItemCategory, photo.CheckId);
+                var r = await _vision.RunCheckAsync(photo.CheckId, prompt, photo.ImageKey, token);
+                var resultText = r.Result.ToString().ToLowerInvariant();
 
-            checkDtos.Add(new CheckDto(
-                step.InstructionTitle, r.Score, r.Result.ToString().ToLowerInvariant(), r.Observations));
-        }
+                var checkInput = new CheckInput(
+                    CheckId: photo.CheckId,
+                    Score: r.Score,
+                    Weight: step.Weight,
+                    Result: r.Result,
+                    IsCritical: step.Weight >= 3,
+                    HardFail: r.HardFail,
+                    Observation: r.Observations);
+
+                var persist = new Check
+                {
+                    CheckId = photo.CheckId,
+                    Score = r.Score,
+                    Result = resultText,
+                    Observation = r.Observations,
+                    RawModelJson = r.RawJson
+                };
+
+                var dto = new CheckDto(step.InstructionTitle, r.Score, resultText, r.Observations);
+                return (checkInput, persist, dto);
+            },
+            ct);
+
+        var checkInputs = perPhoto.Select(x => x.checkInput).ToList();
+        var persistChecks = perPhoto.Select(x => x.persist).ToList();
+        var checkDtos = perPhoto.Select(x => x.dto).ToList();
 
         // Required-step gate input: every required step + whether a photo was supplied.
         var providedCheckIds = photos.Select(p => p.CheckId).ToHashSet();

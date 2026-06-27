@@ -41,6 +41,8 @@ public sealed class VisionOptions
     public PremiumVisionOptions Premium { get; set; } = new();
     /// <summary>Max Tier-2 auth-check calls per scan (cost guardrail, spec Phase 5).</summary>
     public int MaxAuthCallsPerScan { get; set; } = 8;
+    /// <summary>Max Tier-2 auth-check calls running concurrently per scan (spec §9 parallel vision calls).</summary>
+    public int MaxParallelAuthCalls { get; set; } = 4;
     /// <summary>Per-call timeout in seconds before falling back to inconclusive.</summary>
     public int TimeoutSeconds { get; set; } = 30;
 }
