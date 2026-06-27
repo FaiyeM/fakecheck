@@ -51,7 +51,7 @@ plan usage limits). Each run, in order:
 
 | ID | Item | Spec | Priority | Status | Depends on | Notes |
 |---|---|---|---|---|---|---|
-| F0 | Real EF migrations baseline | §0 | P0 | 🔶 | — | **Faye-only (2026-06-28):** sandbox has no .NET SDK + no Railway Postgres access, so the daily task cannot generate/verify migrations. Faye must run F0 locally. Unblocks F9b, F8b, F5, F3b, F9h. |
+| F0 | Real EF migrations baseline | §0 | P0 | ✅ | — | **Done 2026-06-28 (Faye-run, local SDK):** `InitialCreate` migration + design-time factory added; verified live schema == migration (incl. defaults); live DB baselined via `__EFMigrationsHistory` insert (no data touched); `Program.cs` switched `GenerateCreateScript`→`MigrateAsync`. Build clean + 50 xUnit tests pass. Unblocks F9b, F8b, F5, F3b, F9h. Final op check: Railway boot logs show "migrations applied", data intact. |
 | F1 | Fix `fake_bar` product-slug mismatch | §1 / §3.5 | P0 | ⬜ | — | Pure resolver + tests; safe to do in-sandbox. High value, small. |
 | F7 | Usage instrumentation (identify + deep-check events) | §7 | P1 | ⬜ | — | Client analytics only; safe. Do early — data informs §6 caps. |
 | F9a | Parallelize vision calls in `/auth/analyze` | §9 | P0 | ⬜ | — | `SemaphoreSlim` + `Task.WhenAll`. Add/adjust tests. |
@@ -113,6 +113,7 @@ _Newest first. One short entry per run: date · verification result · item atte
 
 | Date | Verify | Item | Outcome | Commit |
 |---|---|---|---|---|
+| 2026-06-28 | backend build clean + 50/50 xUnit GREEN (local SDK) | F0 | Adopted EF migrations on existing live DB: InitialCreate + design-time factory; schema verified == migration; live baselined (history insert, no data loss); Program.cs → MigrateAsync. F0 ✅. | 9795058 + (this) |
 | 2026-06-28 | mobile lint+test GREEN (24/24) | STRAY-2026-06-28 | Faye approved the stray `CameraCapture.tsx` theme-bg fix; committed it. | (this) |
 | 2026-06-28 | ⚠️ partial: mobile lint+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox); git **not clean** at start | none (gate stop) | Working tree had stray uncommitted edit to `CameraCapture.tsx`. Per gate, did **not** start new work. Investigated it (valid cosmetic theme-bg fix, lint+tests green), left it **uncommitted**, queued question [STRAY-2026-06-28] for Faye. Committed the governance docs (tracker/spec/map/recs) which were untracked, plus this log. | c7efd1c |
 | 2026-06-28 | n/a (setup) | Tracker created | Roadmap seeded from spec; task scheduled (evening daily) | — |

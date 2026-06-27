@@ -5,8 +5,6 @@ using FakeCheck.Infrastructure.Data;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Serilog;
 
@@ -98,30 +96,11 @@ if (builder.Configuration.GetValue("Database:MigrateOnStartup", true))
     {
         var db = scope.ServiceProvider.GetRequiredService<FakeCheckDbContext>();
 
-        // No EF migrations exist yet (the build sandbox has no .NET SDK), so bootstrap the schema
-        // directly from the model. We deliberately do NOT use EnsureCreated/HasTables — both
-        // misbehave on a managed-but-empty Postgres (EnsureCreated no-ops because the database
-        // already exists). Instead: probe for a known table, and if it's absent run the model's
-        // full CREATE script. Idempotent and provider-agnostic. Switch to MigrateAsync() once a
-        // migration file is generated on an SDK-equipped environment.
-        var creator = db.GetService<IRelationalDatabaseCreator>();
-        if (!await creator.ExistsAsync())
-        {
-            await creator.CreateAsync();
-            startupLog?.LogInformation("Startup: database did not exist — created it.");
-        }
-
-        bool hasSchema;
-        try { _ = await db.Categories.AnyAsync(); hasSchema = true; }
-        catch { hasSchema = false; }
-        startupLog?.LogInformation("Startup: categories table present = {Has}", hasSchema);
-
-        if (!hasSchema)
-        {
-            var script = db.Database.GenerateCreateScript();
-            await db.Database.ExecuteSqlRawAsync(script);
-            startupLog?.LogInformation("Startup: schema created from model ({Len} chars of DDL).", script.Length);
-        }
+        // Apply versioned EF migrations. The existing live DB was baselined (InitialCreate is
+        // recorded in __EFMigrationsHistory), so this is a no-op there; a fresh DB gets the full
+        // schema built from the migrations.
+        await db.Database.MigrateAsync();
+        startupLog?.LogInformation("Startup: migrations applied.");
 
         await DbSeeder.SeedAsync(db, startupLog);
         startupLog?.LogInformation("Startup: schema + seed complete.");
