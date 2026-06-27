@@ -64,7 +64,7 @@ plan usage limits). Each run, in order:
 | F2 | Multi-image identification + confidence policy | §2 | P1 | ⬜ | — | Pure `ConfidencePolicy` + DTO array + RN UI. Medium. |
 | F3a | Rarity score + value estimate (model-based) | §3.1–3.2 | P1 | ⬜ | F1 (product slug) | Extend identify prompt + DTO + UI. Disclaimer required. |
 | F4 | Vision provider fallback chain + retry/backoff | §4 / §3.3 | P1 | ⬜ | — | **Needs Faye:** backup-provider keys (Groq/OpenRouter). Code can land behind config; keys 🔶. |
-| F8a | Capture confirmations (positive labels) | §8.1 | P1 | ⬜ | — | "Looks right" → corrections w/ confirmed direction. |
+| F8a | Capture confirmations (positive labels) | §8.1 | P1 | 🔶 | — | "Looks right" → corrections w/ confirmed direction. **Blocked 2026-06-28:** needs Faye decision — backend `/corrections` requires `Explanation` ≥20 chars (`Validators.cs:60`) + NOT NULL col, so a one-tap 👍 has no reason. Plus: does 👍 record agreement on every verdict or only authentic? Both are training-data decisions. See Open Questions [F8a]. |
 | F8b | Prompt versioning stamped on checks | §8.2 | P1 | ⬜ | F0 (new column) | Hash per prompt; persist + export. |
 | F2r | Redis-backed rate limiter (multi-instance) | §2.4 | P1 | ⬜ | — | **Needs Faye:** Redis instance on Railway. |
 | F5 | Optional user accounts (Google/Apple/Facebook/email) | §5 | P1 (L) | ⬜ | F0 | **Needs Faye:** managed-auth choice + project/keys; Apple 4.8. Large. |
@@ -73,7 +73,7 @@ plan usage limits). Each run, in order:
 | F3c | Real market comps (per-category data sources) | §3.3 | P2 | ⬜ | F3a | **Needs Faye:** data-source API access/terms. |
 | F8c | Offline eval harness | §8.3 | P2 | ⬜ | F8a/F8b | Replays JSONL vs prompts; reports accuracy. |
 | F9h | Persist `scan_photos` server-side | §3.4(rel) | P2 | ⬜ | F0 | Enables retention + ownership. |
-| F10 | Growth/polish (share card, coverage banner, reference image, affiliate, push, integrity, i18n, a11y, repo cleanup) | §10 | P2 | ⬜ | — | Multiple small items; split as picked up. |
+| F10 | Growth/polish (share card, coverage banner, reference image, affiliate, push, integrity, i18n, a11y, repo cleanup) | §10 | P2 | 🔄 | — | Multiple small items; split as picked up. **2026-06-28:** repo-hygiene sub-slice landed — removed the spec-flagged `stage()` TEMP diagnostic in `mobile/src/api/upload.ts` (inlined the 3 calls so `uploadImageAsync` mirrors `uploadImagesAsync`). Mobile tsc+lint+24 tests GREEN. **Remaining:** share card, coverage banner, reference image, affiliate, push, integrity, i18n, a11y, and the other hygiene items (`_deltest.tmp`, committed mp4, `Program.cs` env logging). |
 | F11 | Security: bump `SixLabors.ImageSharp` off 3.1.5 (known vulns) | — | P1 | ⬜ | — | **Found 2026-06-28.** `FakeCheck.Infrastructure.csproj` pins 3.1.5 → CVEs GHSA-2cmq-823j-5qj8 (high) + GHSA-rxmq-m78w-7wmc (moderate). Used in `Storage/R2StorageClient.cs`. Bump to latest patched 3.1.x, verify the exact fixed version covers both advisories, run build+50 tests. Safe in-sandbox? No (.NET 10 SDK unavailable) → verify via CI. |
 
 > When an item is picked up, the task may split it into sub-rows for clarity. Keep the table the
@@ -98,6 +98,22 @@ reads answers next run and unblocks the item._
 - **[F6] Billing.** Confirm RevenueCat + the exact tier/pricing to encode (Plus price, free caps
   10/day identify + N/month deep-check). _Answer:_ ⬜
 - **[F2r] Redis.** OK to add a Redis service on Railway for the distributed limiter/usage counters?
+  _Answer:_ ⬜
+- **[F8a-2026-06-28] Capture confirmations — how should a one-tap "Looks right 👍" be recorded?**
+  Two decisions block a clean implementation:
+  1. **Explanation requirement.** The corrections endpoint validates `Explanation` ≥20 chars
+     (`backend/FakeCheck.Api/Validation/Validators.cs:60`) and the DB column is NOT NULL
+     (`FakeCheckDbContext.cs:116`). A one-tap 👍 has no typed reason. Pick one:
+     - **(a) Mobile-only:** send a canned explanation (e.g. `"User confirmed: verdict looks correct."`).
+       No backend change, fully verifiable in-sandbox now — but injects synthetic text into the
+       training `explanation` field.
+     - **(b) Backend flag:** add an `isConfirmation` bool (or relax `MinimumLength` when the user agrees
+       with the verdict) so confirmations carry no fake reason. Cleaner dataset, but a backend change —
+       I can't `dotnet build/test` it in this sandbox (no .NET SDK), so it'd have to verify via CI.
+  2. **Which verdicts get 👍?** Should "Looks right" appear on **every** verdict (so a 👍 on a
+     COUNTERFEIT verdict records `userCorrection="fake"` = confirmed-counterfeit), or **only** on
+     authentic / likely-authentic verdicts (`userCorrection="authentic"`, matching the spec's literal
+     "positives enter the dataset")? This defines what "confirmation" means in the learning set.
   _Answer:_ ⬜
 - **[SANDBOX-GIT-2026-06-28] The daily-task sandbox cannot commit.** The Cowork run environment
   mounts the repo with `unlink` disabled (same restriction that breaks `npm ci` on `node_modules`).
@@ -130,6 +146,8 @@ _Newest first. One short entry per run: date · verification result · item atte
 
 | Date | Verify | Item | Outcome | Commit |
 |---|---|---|---|---|
+| 2026-06-28 | mobile tsc+lint+test GREEN (24/24, only pre-existing axios import warning); backend NOT run (no .NET SDK — confirmed `dot.net` install is proxy-blocked 403, so can't install). git tree carried prior run's uncommitted F8a tracker edit (expected per [SANDBOX-GIT]); no regressions. | F10 (repo-hygiene sub-slice) | All eligible P0/P1 items are backend (F1, F9a, F9b — unverifiable, no SDK) or blocked/need-Faye (F8a 🔶, F2 needs unbuilt backend `ConfidencePolicy`, F4/F2r/F5/F6 need accounts/keys). Per the tooling-gap gate, picked the highest-priority **verifiable + unambiguous** item: the F10 §10 repo-hygiene slice explicitly listing the `stage()` TEMP diagnostic for removal. Removed it surgically from `mobile/src/api/upload.ts` (inlined the 3 calls; no orphaned refs; behavior unchanged on happy path). Full mobile gate GREEN. F10 → 🔄 (one sub-slice done; rest remain). **Commit still blocked in sandbox** (unlink on `.git` disabled) — Faye to commit this change + tracker update. | none (commit handed to Faye) |
+| 2026-06-28 | mobile lint+test GREEN (24/24, only pre-existing axios import warning); backend NOT run (no .NET SDK in sandbox — verify via CI). git clean at start; F7 confirmed committed (c954849). | F8a (queued) | All eligible P0 items (F1, F9a, F9b) are backend .NET work → can't `dotnet build/test` here, so per the tooling-gap gate picked the highest-priority **verifiable** item. Top P1 verifiable candidate is F8a. On inspection it needs a Faye decision (one-tap 👍 collides with the `Explanation`≥20 NOT-NULL rule, and the agreement-direction semantics are a training-data choice) → marked 🔶, queued [F8a-2026-06-28]. F2 (next P1) can't be sliced mobile-only either (depends on the not-yet-built backend `ConfidencePolicy`/multi-image API). No code changed beyond this tracker. **Commit still blocked in sandbox** (unlink on `.git` disabled) — Faye to commit this tracker update. | none (tracker only; commit handed to Faye) |
 | 2026-06-28 | mobile lint+typecheck+test GREEN (24/24); backend NOT run (no .NET SDK in sandbox) | F7 | Implemented `identify_completed` usage event + `analytics.identifyCompleted()` facade; wired into `IdentificationResultScreen` after a successful identify (extended facade test). All P0 items are backend → unverifiable this run (no SDK), so picked the highest-priority client-only item per the tooling-gap gate rule. **Could NOT commit:** sandbox mount blocks `unlink` on `.git/index.lock` → git cannot write a commit here. Left changes verified-but-uncommitted in the working tree; main HEAD unchanged (6b0b56e). Queued [SANDBOX-GIT-2026-06-28] for Faye to land + to fix the run env. F7 → 🔄. | none (commit blocked) |
 | 2026-06-28 | backend build clean + 50/50 xUnit GREEN (local SDK) | F0 | Adopted EF migrations on existing live DB: InitialCreate + design-time factory; schema verified == migration; live baselined (history insert, no data loss); Program.cs → MigrateAsync. F0 ✅. | 9795058 + (this) |
 | 2026-06-28 | mobile lint+test GREEN (24/24) | STRAY-2026-06-28 | Faye approved the stray `CameraCapture.tsx` theme-bg fix; committed it. | (this) |
