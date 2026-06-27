@@ -51,7 +51,7 @@ plan usage limits). Each run, in order:
 
 | ID | Item | Spec | Priority | Status | Depends on | Notes |
 |---|---|---|---|---|---|---|
-| F0 | Real EF migrations baseline | §0 | P0 | ⬜ | — | **Likely needs Faye:** requires .NET SDK + live-DB diff. If sandbox lacks SDK/DB → 🔶. |
+| F0 | Real EF migrations baseline | §0 | P0 | 🔶 | — | **Faye-only (2026-06-28):** sandbox has no .NET SDK + no Railway Postgres access, so the daily task cannot generate/verify migrations. Faye must run F0 locally. Unblocks F9b, F8b, F5, F3b, F9h. |
 | F1 | Fix `fake_bar` product-slug mismatch | §1 / §3.5 | P0 | ⬜ | — | Pure resolver + tests; safe to do in-sandbox. High value, small. |
 | F7 | Usage instrumentation (identify + deep-check events) | §7 | P1 | ⬜ | — | Client analytics only; safe. Do early — data informs §6 caps. |
 | F9a | Parallelize vision calls in `/auth/analyze` | §9 | P0 | ⬜ | — | `SemaphoreSlim` + `Task.WhenAll`. Add/adjust tests. |
@@ -89,7 +89,7 @@ reads answers next run and unblocks the item._
 > so you can answer ahead of time and unblock faster.)_
 
 - **[F0] Migrations environment.** Does the daily task's sandbox have the .NET SDK + access to the live
-  Railway Postgres to generate/verify migrations? If not, F0 must be run by you locally. _Answer:_ ⬜
+  Railway Postgres to generate/verify migrations? If not, F0 must be run by you locally. _Answer:_ ✅ **NO** (2026-06-28) — sandbox has neither. F0 is Faye-only; marked 🔶. Daily task will skip F0 and its dependents (F9b, F8b, F5, F3b, F9h) until Faye lands the migrations baseline locally.
 - **[F4] Backup vision providers.** Which fallback providers do you want wired, and where will their API
   keys live (Railway env)? Suggested: OpenRouter (free overflow) + Groq (cheap). _Answer:_ ⬜
 - **[F5] Auth provider.** Managed (Supabase Auth / Firebase / Clerk) or ASP.NET Core Identity? This
