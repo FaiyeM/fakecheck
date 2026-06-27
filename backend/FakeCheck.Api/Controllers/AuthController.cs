@@ -136,9 +136,15 @@ public sealed class AuthController : ControllerBase
             Steps: stepStatuses,
             FakeBar: fakeBar));
 
-        // Persist checks + verdict (best-effort; analysis still returns if persistence fails).
+        // The image keys photographed for this scan, for retention + ownership checks (spec §9 / §3.4).
+        var scanPhotos = photos
+            .Select(p => new ScanPhoto { StepId = stepByCheck[p.CheckId].Id, ImageUrl = p.ImageKey })
+            .ToList();
+
+        // Persist photos + checks + verdict (best-effort; analysis still returns if persistence fails).
         try
         {
+            await _repo.SavePhotosAsync(req.ScanId, scanPhotos, ct);
             await _repo.SaveChecksAsync(req.ScanId, persistChecks, ct);
             await _repo.SaveVerdictAsync(new Verdict
             {

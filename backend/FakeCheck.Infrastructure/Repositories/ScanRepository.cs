@@ -51,6 +51,16 @@ public sealed class ScanRepository : IScanRepository
         await _db.SaveChangesAsync(ct);
     }
 
+    public async Task SavePhotosAsync(Guid scanId, IEnumerable<ScanPhoto> photos, CancellationToken ct = default)
+    {
+        foreach (var p in photos)
+        {
+            p.ScanId = scanId;
+            _db.ScanPhotos.Add(p);
+        }
+        await _db.SaveChangesAsync(ct);
+    }
+
     public async Task SaveVerdictAsync(Verdict verdict, CancellationToken ct = default)
     {
         _db.Verdicts.Add(verdict);

@@ -13,6 +13,9 @@ public interface IScanRepository
     /// <summary>All seeded products for a category — candidates for free-text slug resolution (spec §1).</summary>
     Task<IReadOnlyList<Product>> GetProductsByCategoryAsync(string categoryId, CancellationToken ct = default);
     Task SaveChecksAsync(Guid scanId, IEnumerable<Check> checks, CancellationToken ct = default);
+
+    /// <summary>Persist the image keys photographed for a scan (spec §9 / §3.4 — retention + ownership).</summary>
+    Task SavePhotosAsync(Guid scanId, IEnumerable<ScanPhoto> photos, CancellationToken ct = default);
     Task SaveVerdictAsync(Verdict verdict, CancellationToken ct = default);
     Task SaveCorrectionAsync(Correction correction, CancellationToken ct = default);
 
