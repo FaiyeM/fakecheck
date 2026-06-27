@@ -51,7 +51,7 @@ plan usage limits). Each run, in order:
 
 | ID | Item | Spec | Priority | Status | Depends on | Notes |
 |---|---|---|---|---|---|---|
-| F0 | Real EF migrations baseline | §0 | P0 | ✅ | — | **Done 2026-06-28 (Faye-run, local SDK):** `InitialCreate` migration + design-time factory added; verified live schema == migration (incl. defaults); live DB baselined via `__EFMigrationsHistory` insert (no data touched); `Program.cs` switched `GenerateCreateScript`→`MigrateAsync`. Build clean + 50 xUnit tests pass. Unblocks F9b, F8b, F5, F3b, F9h. Final op check: Railway boot logs show "migrations applied", data intact. |
+| F0 | Real EF migrations baseline | §0 | P0 | ✅ | — | **Done 2026-06-28 (Faye-run, local SDK):** `InitialCreate` migration + design-time factory added; verified live schema == migration (incl. defaults); live DB baselined via `__EFMigrationsHistory` insert (no data touched); `Program.cs` switched `GenerateCreateScript`→`MigrateAsync`. Build clean + 50 xUnit tests pass. Unblocks F9b, F8b, F5, F3b, F9h. Boot confirmed green on Railway (CI + deploy), data intact. |
 | F1 | Fix `fake_bar` product-slug mismatch | §1 / §3.5 | P0 | ⬜ | — | Pure resolver + tests; safe to do in-sandbox. High value, small. |
 | F7 | Usage instrumentation (identify + deep-check events) | §7 | P1 | ⬜ | — | Client analytics only; safe. Do early — data informs §6 caps. |
 | F9a | Parallelize vision calls in `/auth/analyze` | §9 | P0 | ⬜ | — | `SemaphoreSlim` + `Task.WhenAll`. Add/adjust tests. |
@@ -74,6 +74,7 @@ plan usage limits). Each run, in order:
 | F8c | Offline eval harness | §8.3 | P2 | ⬜ | F8a/F8b | Replays JSONL vs prompts; reports accuracy. |
 | F9h | Persist `scan_photos` server-side | §3.4(rel) | P2 | ⬜ | F0 | Enables retention + ownership. |
 | F10 | Growth/polish (share card, coverage banner, reference image, affiliate, push, integrity, i18n, a11y, repo cleanup) | §10 | P2 | ⬜ | — | Multiple small items; split as picked up. |
+| F11 | Security: bump `SixLabors.ImageSharp` off 3.1.5 (known vulns) | — | P1 | ⬜ | — | **Found 2026-06-28.** `FakeCheck.Infrastructure.csproj` pins 3.1.5 → CVEs GHSA-2cmq-823j-5qj8 (high) + GHSA-rxmq-m78w-7wmc (moderate). Used in `Storage/R2StorageClient.cs`. Bump to latest patched 3.1.x, verify the exact fixed version covers both advisories, run build+50 tests. Safe in-sandbox? No (.NET 10 SDK unavailable) → verify via CI. |
 
 > When an item is picked up, the task may split it into sub-rows for clarity. Keep the table the
 > authoritative status list.
