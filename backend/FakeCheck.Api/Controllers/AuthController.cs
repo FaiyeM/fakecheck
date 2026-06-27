@@ -97,7 +97,16 @@ public sealed class AuthController : ControllerBase
         var fakeBar = 0m;
         if (!string.IsNullOrWhiteSpace(req.ProductId))
         {
+            // The client sends a free-text product line (e.g. "Air Jordan 1"), not the slug PK,
+            // so a direct PK lookup misses and fake_bar silently stays 0 (spec §1). Fall back to
+            // resolving the free text against the category's seeded products.
             var product = await _repo.GetProductAsync(req.ProductId, ct);
+            if (product is null)
+            {
+                var candidates = await _repo.GetProductsByCategoryAsync(req.ItemCategory, ct);
+                var slug = ProductResolver.Resolve(candidates, brand: null, line: req.ProductId);
+                if (slug is not null) product = candidates.FirstOrDefault(p => p.Id == slug);
+            }
             if (product is not null) fakeBar = product.FakeBar;
         }
 

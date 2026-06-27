@@ -35,6 +35,12 @@ public sealed class ScanRepository : IScanRepository
     public Task<Product?> GetProductAsync(string productId, CancellationToken ct = default) =>
         _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId, ct);
 
+    public async Task<IReadOnlyList<Product>> GetProductsByCategoryAsync(string categoryId, CancellationToken ct = default) =>
+        await _db.Products
+            .Where(p => p.CategoryId == categoryId)
+            .AsNoTracking()
+            .ToListAsync(ct);
+
     public async Task SaveChecksAsync(Guid scanId, IEnumerable<Check> checks, CancellationToken ct = default)
     {
         foreach (var c in checks)
